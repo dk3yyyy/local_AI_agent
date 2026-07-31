@@ -74,7 +74,7 @@ class ReviewDataTest(unittest.TestCase):
     def test_rejects_missing_columns(self) -> None:
         dataframe = pd.DataFrame({"Title": ["Only a title"]})
 
-        with self.assertRaisesRegex(ReviewDataError, "missing required columns"):
+        with self.assertRaisesRegex(ReviewDataError, "review text column"):
             load_reviews(dataframe)
 
     def test_rejects_invalid_rating_and_date(self) -> None:

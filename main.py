@@ -39,10 +39,13 @@ def _add_runtime_arguments(parser: argparse.ArgumentParser) -> None:
 
 def _add_search_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--limit", type=int, default=5)
-    parser.add_argument("--min-rating", type=int, choices=range(1, 6), default=1)
-    parser.add_argument("--max-rating", type=int, choices=range(1, 6), default=5)
+    parser.add_argument("--min-rating", type=int, choices=range(1, 6))
+    parser.add_argument("--max-rating", type=int, choices=range(1, 6))
     parser.add_argument("--start-date", type=_date_argument)
     parser.add_argument("--end-date", type=_date_argument)
+    parser.add_argument("--sentiment", action="append", default=[])
+    parser.add_argument("--restaurant", action="append", default=[])
+    parser.add_argument("--country", action="append", default=[])
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -92,11 +95,13 @@ def _print_answer(result) -> None:
     print("Sources")
     for source in result.sources:
         metadata = source.document.metadata
-        print(
-            f"[{source.citation_number}] "
-            f"{metadata.get('rating', '?')}/5, {metadata.get('date', 'unknown')}"
-        )
-        print(source.document.page_content.replace("\n", " — "))
+        details = [
+            str(metadata[key])
+            for key in ("restaurant", "country", "sentiment", "rating", "date")
+            if key in metadata
+        ]
+        print(f"[{source.citation_number}] " + " · ".join(details))
+        print(source.document.page_content.replace("\n", " | "))
 
 
 def _create_runtime(arguments: argparse.Namespace):
@@ -124,6 +129,9 @@ def _answer(arguments: argparse.Namespace, question: str) -> None:
         max_rating=arguments.max_rating,
         start_date=arguments.start_date,
         end_date=arguments.end_date,
+        sentiments=arguments.sentiment,
+        restaurants=arguments.restaurant,
+        countries=arguments.country,
     )
     _print_answer(result)
 
