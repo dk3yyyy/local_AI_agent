@@ -10,7 +10,10 @@ from langchain_core.documents import Document
 from vector import (
     DEFAULT_DATA_PATH,
     ReviewDataError,
+    _documents_and_ids,
     create_vector_store,
+    dataset_fingerprint,
+    dataset_storage,
     dataset_summary,
     index_count,
     load_reviews,
@@ -66,10 +69,9 @@ class ReviewDataTest(unittest.TestCase):
                 os.chdir(previous_directory)
 
         self.assertEqual(len(dataframe), 123)
-        self.assertEqual(
-            DEFAULT_DATA_PATH,
-            Path(__file__).resolve().parents[1] / "realistic_restaurant_reviews.csv",
-        )
+        self.assertTrue(DEFAULT_DATA_PATH.is_file())
+        self.assertEqual(DEFAULT_DATA_PATH.name, "realistic_restaurant_reviews.csv")
+        self.assertEqual(DEFAULT_DATA_PATH.parent.name, "data")
 
     def test_rejects_missing_columns(self) -> None:
         dataframe = pd.DataFrame({"Title": ["Only a title"]})
@@ -178,6 +180,56 @@ class VectorStoreTest(unittest.TestCase):
             self.assertEqual(index_count(store), 2)
             self.assertEqual(len(second_embeddings.document_batches), 1)
             self.assertEqual(len(second_embeddings.document_batches[0]), 1)
+
+    def test_document_ids_are_stable_when_rows_are_reordered(self) -> None:
+        normalized = load_reviews(self.dataframe)
+        _, original_ids = _documents_and_ids(normalized)
+        _, reordered_ids = _documents_and_ids(
+            normalized.iloc[::-1].reset_index(drop=True)
+        )
+
+        self.assertEqual(set(original_ids), set(reordered_ids))
+        self.assertTrue(all(item_id.startswith("review_") for item_id in original_ids))
+
+    def test_reconciles_changed_and_deleted_reviews(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            database_path = Path(temporary_directory) / "chroma"
+            first = create_vector_store(
+                self.dataframe,
+                database_path=database_path,
+                collection_name="reconciliation_test",
+                embeddings=DeterministicEmbeddings(),
+            )
+            first_ids = set(first.get(include=[])["ids"])
+
+            replacement = self.dataframe.iloc[[0]].copy()
+            replacement.loc[replacement.index[0], "Review"] = "Updated crisp crust."
+            second = create_vector_store(
+                replacement,
+                database_path=database_path,
+                collection_name="reconciliation_test",
+                embeddings=DeterministicEmbeddings(),
+            )
+            second_ids = set(second.get(include=[])["ids"])
+
+            self.assertEqual(index_count(second), 1)
+            self.assertTrue(first_ids.isdisjoint(second_ids))
+
+    def test_dataset_storage_is_derived_and_isolated(self) -> None:
+        normalized = load_reviews(self.dataframe)
+        changed = normalized.copy()
+        changed.loc[0, "Review"] = "Different source content"
+
+        first_digest = dataset_fingerprint(normalized)
+        second_digest = dataset_fingerprint(changed)
+        first_database, first_collection = dataset_storage(normalized)
+        second_database, second_collection = dataset_storage(changed)
+
+        self.assertNotEqual(first_digest, second_digest)
+        self.assertNotEqual(first_database, second_database)
+        self.assertNotEqual(first_collection, second_collection)
+        self.assertIn(first_digest, str(first_database))
+        self.assertTrue(first_collection.startswith("reviews_"))
 
     def test_filters_semantic_results_by_rating_and_date(self) -> None:
         results = [

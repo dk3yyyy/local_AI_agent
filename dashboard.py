@@ -19,12 +19,12 @@ from ollama_health import (
     check_ollama,
 )
 from vector import (
-    DEFAULT_COLLECTION_NAME,
     DEFAULT_DATA_PATH,
-    DEFAULT_DATABASE_PATH,
     ColumnMapping,
     ReviewDataError,
     create_vector_store,
+    dataset_fingerprint,
+    dataset_storage,
     dataset_summary,
     filter_reviews,
     index_count,
@@ -126,11 +126,13 @@ def default_selection() -> DatasetSelection:
         rating="Rating",
     )
     dataframe = load_reviews(DEFAULT_DATA_PATH, mapping=mapping)
+    digest = dataset_fingerprint(dataframe)
+    database_path, collection_name = dataset_storage(dataframe)
     return DatasetSelection(
         csv_path=DEFAULT_DATA_PATH,
-        database_path=DEFAULT_DATABASE_PATH,
-        collection_name=DEFAULT_COLLECTION_NAME,
-        digest="bundled-dataset",
+        database_path=database_path,
+        collection_name=collection_name,
+        digest=digest,
         review_count=len(dataframe),
         mapping=mapping,
     )

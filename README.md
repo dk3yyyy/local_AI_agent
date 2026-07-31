@@ -5,19 +5,22 @@
 [![Streamlit](https://img.shields.io/badge/dashboard-Streamlit-FF4B4B.svg)](https://streamlit.io/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-A local review-intelligence application powered by Ollama and ChromaDB. Explore restaurant-review metrics, filter the evidence, upload compatible CSV datasets, and ask grounded questions with cited source reviews.
+A local-first review-intelligence application powered by Ollama and embedded ChromaDB. Explore restaurant-review metrics, filter evidence, upload compatible CSV datasets, and ask grounded questions with validated source citations.
 
-Review data and model prompts stay on your machine. No hosted model API is required.
+By default, runtime review data, embeddings, and prompts are processed by embedded Chroma and Ollama on the same machine. If `OLLAMA_HOST` points to another computer or hosted endpoint, prompts and retrieved review excerpts are sent there. Installing dependencies and downloading models also use the network.
 
 ## Highlights
 
 - **Visual dashboard:** rating metrics, distribution chart, date and rating filters, and review browser.
-- **Grounded answers:** the model receives only retrieved reviews and returns numbered citations.
+- **Validated citations:** the model cites stable retrieved source IDs; invented or missing citations fail safely.
 - **Safe offline state:** analytics still load when Ollama is unavailable, while the app shows exact setup commands instead of crashing.
-- **Adaptive CSV upload:** automatically detect common headers, manually map unfamiliar names, and isolate each schema in content-addressed Chroma storage.
-- **Incremental indexing:** only missing review IDs are embedded, including recovery after an interrupted first run.
-- **Terminal interface:** health, one-shot question, and interactive chat commands use the same tested core.
-- **Local execution:** Ollama handles both embeddings and answer generation.
+- **Adaptive CSV upload:** automatically detect common headers, manually map unfamiliar names, and isolate every dataset in content-addressed Chroma storage.
+- **Reconciled indexing:** content-derived IDs survive reordering; additions, changed records, and deletions are synchronized safely.
+- **Measured RAG:** a four-case evaluation set reports retrieval recall, citation correctness, reference-grounded faithfulness, and abstention accuracy.
+- **Installable CLI:** the packaged `local-ai-agent` command exposes status, ask, chat, and evaluate workflows.
+- **Local execution by default:** Ollama handles embeddings and answer generation unless a remote host is explicitly configured.
+
+See the [architecture diagram and boundary notes](docs/architecture.md).
 
 ## Requirements
 
@@ -103,22 +106,28 @@ Review text cannot be empty. Mapped ratings must be integers from 1 through 5, a
 Check the dataset, Ollama service, and required models without starting indexing:
 
 ```bash
-uv run python main.py status
+uv run local-ai-agent status
 ```
 
 Ask one question:
 
 ```bash
-uv run python main.py ask "What do guests say about the crust?"
+uv run local-ai-agent ask "What do guests say about the crust?"
 ```
 
 Start an interactive terminal session:
 
 ```bash
-uv run python main.py chat
+uv run local-ai-agent chat
 ```
 
-The original no-argument command remains equivalent to `chat`:
+Run the measured RAG evaluation against the configured local models:
+
+```bash
+uv run local-ai-agent evaluate
+```
+
+The original source-tree command remains available for development:
 
 ```bash
 uv run python main.py
@@ -135,17 +144,17 @@ The defaults can be changed through command options, dashboard controls, or thes
 | `OLLAMA_HOST` | `http://localhost:11434` |
 | `CHAT_MODEL` | `llama3.2` |
 | `EMBEDDING_MODEL` | `mxbai-embed-large` |
-| `LOCAL_AI_STORAGE_ROOT` | `.local_data/` inside the project |
+| `LOCAL_AI_STORAGE_ROOT` | `~/.local/share/local-ai-agent` |
 
 ## Storage and indexing
 
-The bundled dataset uses `chrome_langchain_db/`. Validated uploads are saved under `.local_data/uploads/`, while their isolated vector collections live under `.local_data/chroma/`.
+Every normalized review receives a content-derived source ID. The dataset fingerprint is calculated from the sorted record digests, so row reordering does not create a new dataset. The fingerprint automatically derives both the Chroma database directory and collection name under `LOCAL_AI_STORAGE_ROOT`.
 
-Both locations are excluded from Git. Uploaded datasets use a SHA-256 hash of the file content and confirmed mapping. Identical files with the same mapping reuse storage, while different files or interpretations cannot overwrite one another.
+Validated uploads are retained under `<storage-root>/uploads/`. Their embedded Chroma databases live under `<storage-root>/chroma/<dataset-fingerprint>/`. Identical content and mapping reuse storage; changed datasets are isolated automatically.
 
-On startup, indexing compares source review IDs with IDs already stored in Chroma. Missing reviews are embedded and existing reviews are left untouched. If an embedding run fails after the database is created, the next attempt retries the missing reviews.
+On startup, reconciliation compares desired content IDs with Chroma. New IDs are embedded, changed records receive new IDs, and stale IDs from deleted or changed records are removed. Interrupted embedding runs retry the records that are still missing.
 
-To rebuild the bundled index, stop the application and remove `chrome_langchain_db/`. To remove uploaded datasets and their indexes, remove `.local_data/`.
+To remove local application data and indexes, stop the application and delete the configured `LOCAL_AI_STORAGE_ROOT`. This deletes local indexes and retained uploads; it does not remove Ollama models.
 
 ## Tests and quality checks
 
@@ -159,10 +168,13 @@ The suite covers:
 
 - schema alias detection and manual column mapping;
 - optional rating, date, sentiment, restaurant, and country fields;
-- Chroma recovery and incremental indexing;
+- content-derived IDs and order-independent dataset fingerprints;
+- Chroma recovery plus addition, change, and deletion reconciliation;
+- automatic database and collection isolation;
 - adaptive rating, date, and categorical filtering;
 - Ollama health states;
-- grounded prompt and citation construction;
+- source-ID citation validation and model abstention;
+- all four RAG evaluation metrics;
 - deterministic upload storage;
 - Streamlit rendering without Ollama.
 
@@ -179,27 +191,36 @@ GitHub Actions runs the tests on Python 3.11 and Python 3.14.
 
 ```text
 .
-├── agent.py                         # Grounded answer and citation service
+├── agent.py                         # Answer generation and source-ID validation
 ├── dashboard.py                     # Streamlit review-intelligence dashboard
 ├── dashboard_support.py             # Validated, content-addressed CSV uploads
-├── main.py                          # Status, ask, and chat CLI
+├── evaluation.py                    # RAG evaluation runner and metrics
+├── main.py                          # Status, ask, chat, and evaluate CLI
 ├── ollama_health.py                 # Ollama and model preflight checks
-├── vector.py                        # Validation, indexing, metrics, and retrieval
-├── realistic_restaurant_reviews.csv
-├── .streamlit/config.toml           # Dashboard theme and upload limit
-├── tests/                            # Unit, integration, and dashboard tests
+├── vector.py                        # Validation, identity, reconciliation, and retrieval
+├── local_ai_agent/                  # Installed entry point and packaged data
+│   └── data/rag_cases.json          # Curated RAG evaluation set
+├── docs/architecture.md             # Architecture and privacy boundaries
+├── docs/architecture.svg            # Editable architecture diagram
+├── tests/                            # Unit, integration, evaluation, and dashboard tests
 ├── pyproject.toml
 └── uv.lock
 ```
 
+## Dependency audit
+
+ChromaDB is declared directly at the newest PyPI release verified during this update (`1.5.9`). `pip-audit` still reports `PYSEC-2026-311` / `CVE-2026-45829`, and the advisory currently lists no fixed release. It concerns an unauthenticated Chroma HTTP server endpoint that accepts `trust_remote_code`; this application uses embedded Chroma and does not start that server. The finding is documented rather than misrepresented as resolved.
+
 ## Current limitations
 
-- Semantic questions require a live local Ollama service and both configured models.
+- Semantic questions and measured evaluations require a reachable Ollama service and both configured models.
+- Browser uploads remain limited to 10 MB. Large datasets require a future chunked/local-path ingestion path rather than merely increasing Streamlit's limit.
 - Rating, date, sentiment, restaurant, and country filters are applied after semantic ranking. This is suitable for small local datasets but not optimized for very large collections.
 - Automatic mapping is conservative. Unfamiliar or ambiguous headers require confirmation in the dashboard.
 - Sentiment labels are displayed and filtered as supplied. The application does not infer sentiment when the dataset lacks a sentiment column.
-- Topic modeling, hybrid keyword retrieval, reranking, and formal RAG evaluation are not implemented yet.
-- The application is intended for local use and does not provide authentication or multi-user isolation.
+- The faithfulness score is a transparent reference-term check against cited source text, not an LLM judge or proof that every possible claim is correct.
+- Topic modeling, hybrid keyword retrieval, and reranking are not implemented.
+- The application does not provide authentication or multi-user isolation and should not be exposed directly as a shared public service.
 
 ## License
 

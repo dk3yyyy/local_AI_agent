@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from datetime import date
 from typing import Any
@@ -11,11 +12,17 @@ from vector import ReviewMatch, search_reviews
 NO_MATCH_MESSAGE = (
     "I could not find any reviews matching the current question and filters."
 )
+CITATION_VALIDATION_MESSAGE = (
+    "I could not produce an answer with citations that match the retrieved reviews."
+)
+CITATION_PATTERN = re.compile(r"\[([A-Za-z0-9][A-Za-z0-9_-]*)\]")
+INSUFFICIENT_EVIDENCE_TOKEN = "INSUFFICIENT_EVIDENCE"
 
 ANSWER_PROMPT = """You are a review analyst.
 Answer the question using only the supplied reviews. Do not add facts that are not present.
-When evidence is mixed or limited, say so clearly. Cite supporting records with bracketed
-numbers such as [1] or [2].
+When evidence is mixed or limited, say so clearly. Every factual claim must cite one or more
+retrieved source IDs exactly as shown, for example [review_ab12]. Never invent a source ID.
+If the supplied reviews do not answer the question, reply exactly INSUFFICIENT_EVIDENCE.
 
 Question:
 {question}
@@ -57,9 +64,12 @@ def _format_context(matches: list[ReviewMatch]) -> str:
         ("restaurant", "Restaurant"),
         ("country", "Country"),
     )
-    for number, match in enumerate(matches, start=1):
+    for match in matches:
         metadata = match.document.metadata
-        lines = [f"[{number}]"]
+        source_id = str(metadata.get("source_id") or match.document.id or "")
+        if not source_id:
+            raise ValueError("retrieved review is missing a source ID")
+        lines = [f"[{source_id}]"]
         for key, label in labels:
             value = metadata.get(key)
             if value is not None:
@@ -68,6 +78,42 @@ def _format_context(matches: list[ReviewMatch]) -> str:
         lines.append(match.document.page_content)
         sections.append("\n".join(lines))
     return "\n\n".join(sections)
+
+
+def _validate_and_number_citations(
+    answer: str,
+    matches: list[ReviewMatch],
+) -> tuple[str, tuple[CitedReview, ...]] | None:
+    retrieved: dict[str, ReviewMatch] = {}
+    for match in matches:
+        source_id = str(
+            match.document.metadata.get("source_id") or match.document.id or ""
+        )
+        if not source_id:
+            return None
+        retrieved[source_id] = match
+
+    cited_ids = CITATION_PATTERN.findall(answer)
+    if not cited_ids or any(source_id not in retrieved for source_id in cited_ids):
+        return None
+
+    ordered_ids = list(dict.fromkeys(cited_ids))
+    citation_numbers = {
+        source_id: number for number, source_id in enumerate(ordered_ids, start=1)
+    }
+    numbered_answer = CITATION_PATTERN.sub(
+        lambda match: f"[{citation_numbers[match.group(1)]}]",
+        answer,
+    )
+    sources = tuple(
+        CitedReview(
+            citation_number=citation_numbers[source_id],
+            document=retrieved[source_id].document,
+            score=retrieved[source_id].score,
+        )
+        for source_id in ordered_ids
+    )
+    return numbered_answer, sources
 
 
 def answer_question(
@@ -113,12 +159,11 @@ def answer_question(
     )
     response = answer_model.invoke(prompt)
     answer = response.content if hasattr(response, "content") else str(response)
-    sources = tuple(
-        CitedReview(
-            citation_number=number,
-            document=match.document,
-            score=match.score,
-        )
-        for number, match in enumerate(matches, start=1)
-    )
-    return AnswerResult(answer=answer.strip(), sources=sources)
+    normalized_answer = answer.strip()
+    if normalized_answer == INSUFFICIENT_EVIDENCE_TOKEN:
+        return AnswerResult(answer=NO_MATCH_MESSAGE, sources=())
+    validated = _validate_and_number_citations(normalized_answer, matches)
+    if validated is None:
+        return AnswerResult(answer=CITATION_VALIDATION_MESSAGE, sources=())
+    validated_answer, sources = validated
+    return AnswerResult(answer=validated_answer, sources=sources)
