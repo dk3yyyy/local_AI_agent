@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Local AI Agent architecture</title>
+  <desc id="desc">A one-way ingestion and answer architecture with content identity, dataset-isolated Chroma, local Ollama, validated source citations, and offline RAG evaluation.</desc>
+  <defs>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#1e293b" stroke-width="0.6"/>
+    </pattern>
+    <marker id="grayArrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9Z" fill="#cbd5e1"/></marker>
+    <marker id="cyanArrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9Z" fill="#22d3ee"/></marker>
+    <marker id="amberArrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0L9 4.5L0 9Z" fill="#fbbf24"/></marker>
+    <style>
+      .title{font:700 25px ui-monospace,SFMono-Regular,Menlo,monospace;fill:#f8fafc}
+      .sub{font:13px ui-monospace,SFMono-Regular,Menlo,monospace;fill:#cbd5e1}
+      .label{font:700 14px ui-monospace,SFMono-Regular,Menlo,monospace;fill:#f8fafc}
+      .small{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;fill:#e2e8f0}
+      .tiny{font:11px ui-monospace,SFMono-Regular,Menlo,monospace;fill:#cbd5e1}
+      .data{fill:none;stroke:#22d3ee;stroke-width:2.4;marker-end:url(#cyanArrow)}
+      .runtime{fill:none;stroke:#cbd5e1;stroke-width:2.2;marker-end:url(#grayArrow)}
+      .offline{fill:none;stroke:#fbbf24;stroke-width:2;stroke-dasharray:7 6;marker-end:url(#amberArrow)}
+      .remote{fill:none;stroke:#fb7185;stroke-width:2;stroke-dasharray:6 5;marker-end:url(#grayArrow)}
+      .node{stroke-width:1.6;rx:12}
+    </style>
+  </defs>
+  <rect width="1200" height="760" fill="#020617"/>
+  <rect width="1200" height="760" fill="url(#grid)"/>
+
+  <text x="48" y="48" class="title">LOCAL REVIEW INTELLIGENCE · SYSTEM MAP</text>
+  <text x="48" y="74" class="sub">Stable source identity · isolated persistence · validated citations · measured RAG</text>
+
+  <rect x="244" y="112" width="900" height="548" rx="24" fill="#052e261f" stroke="#34d399" stroke-width="1.6" stroke-dasharray="9 7"/>
+  <text x="268" y="140" class="small" fill="#6ee7b7">DEFAULT LOCAL RUNTIME BOUNDARY</text>
+  <text x="268" y="160" class="tiny">Embedded Chroma and local Ollama stay here.</text>
+  <text x="268" y="178" class="tiny">A configured remote OLLAMA_HOST sends prompts and retrieved excerpts outside.</text>
+
+  <!-- Connections render behind nodes -->
+  <path d="M208 232H280" class="data"/>
+  <path d="M208 330C242 330 244 256 280 256" class="data"/>
+  <path d="M450 240H500" class="data"/>
+  <path d="M670 240H720" class="data"/>
+
+  <path d="M208 248C236 248 244 422 280 422" class="runtime"/>
+  <path d="M208 330C236 330 244 446 280 446" class="runtime"/>
+  <path d="M450 431H500" class="runtime"/>
+  <path d="M670 431H720" class="runtime"/>
+  <path d="M890 431H948" class="runtime"/>
+
+  <path d="M420 382V318H770V292" class="runtime"/>
+  <text x="536" y="311" class="tiny">semantic query</text>
+  <path d="M800 292V348H390V382" class="data"/>
+  <text x="526" y="342" class="tiny">retrieved evidence + stable IDs</text>
+
+  <path d="M1048 286V518H605V480" class="remote"/>
+  <text x="820" y="511" class="tiny" fill="#fda4af">configured remote model path</text>
+
+  <path d="M365 480C365 536 520 548 548 570" class="offline"/>
+  <path d="M805 480C805 536 690 548 662 570" class="offline"/>
+  <text x="420" y="535" class="tiny" fill="#fde68a">recorded retrieval + answer observations</text>
+
+  <!-- Inputs -->
+  <rect x="48" y="195" width="160" height="76" class="node" fill="#082f49" stroke="#22d3ee"/>
+  <text x="70" y="224" class="label">STREAMLIT</text>
+  <text x="70" y="246" class="small">upload · map · filter</text>
+  <text x="70" y="263" class="tiny">ask · inspect sources</text>
+
+  <rect x="48" y="294" width="160" height="72" class="node" fill="#082f49" stroke="#22d3ee"/>
+  <text x="70" y="323" class="label">CLI</text>
+  <text x="70" y="345" class="small">status · ask · evaluate</text>
+
+  <!-- Ingestion row -->
+  <rect x="280" y="198" width="170" height="92" class="node" fill="#064e3b" stroke="#34d399"/>
+  <text x="300" y="226" class="label">SCHEMA GATE</text>
+  <text x="300" y="249" class="small">map source columns</text>
+  <text x="300" y="268" class="small">validate mapped values</text>
+
+  <rect x="500" y="198" width="170" height="92" class="node" fill="#064e3b" stroke="#34d399"/>
+  <text x="520" y="226" class="label">IDENTITY</text>
+  <text x="520" y="249" class="small">record content hashes</text>
+  <text x="520" y="268" class="small">order-free fingerprint</text>
+
+  <rect x="720" y="190" width="170" height="102" class="node" fill="#4c1d95" stroke="#a78bfa"/>
+  <text x="740" y="219" class="label">ISOLATED CHROMA</text>
+  <text x="740" y="242" class="small">database per dataset</text>
+  <text x="740" y="261" class="small">collection per fingerprint</text>
+  <text x="740" y="280" class="tiny">reconcile add · change · delete</text>
+
+  <!-- Remote exception outside privacy boundary -->
+  <rect x="964" y="184" width="168" height="102" class="node" fill="#4c0519" stroke="#fb7185" stroke-dasharray="6 5"/>
+  <text x="984" y="213" class="label">REMOTE OLLAMA</text>
+  <text x="984" y="236" class="small">optional host override</text>
+  <text x="984" y="255" class="small">prompts leave device</text>
+  <text x="984" y="274" class="tiny">not the default path</text>
+
+  <!-- Answer row: single left-to-right sequence -->
+  <rect x="280" y="382" width="170" height="98" class="node" fill="#064e3b" stroke="#34d399"/>
+  <text x="300" y="411" class="label">RETRIEVAL</text>
+  <text x="300" y="434" class="small">semantic candidates</text>
+  <text x="300" y="453" class="small">deterministic filters</text>
+  <text x="300" y="471" class="tiny">returns stable source IDs</text>
+
+  <rect x="500" y="382" width="170" height="98" class="node" fill="#78350f" stroke="#fbbf24"/>
+  <text x="520" y="411" class="label">LOCAL OLLAMA</text>
+  <text x="520" y="434" class="small">embedding + answer models</text>
+  <text x="520" y="453" class="small">source-ID citations</text>
+  <text x="520" y="471" class="tiny">or explicit abstention</text>
+
+  <rect x="720" y="382" width="170" height="98" class="node" fill="#881337" stroke="#fb7185"/>
+  <text x="740" y="411" class="label">CITATION GATE</text>
+  <text x="740" y="434" class="small">cited ID was retrieved</text>
+  <text x="740" y="453" class="small">uncited / invalid → fail safe</text>
+  <text x="740" y="471" class="tiny">then number citations</text>
+
+  <rect x="948" y="392" width="174" height="78" class="node" fill="#082f49" stroke="#22d3ee"/>
+  <text x="970" y="421" class="label">ANSWER</text>
+  <text x="970" y="444" class="small">grounded response</text>
+  <text x="970" y="462" class="tiny">or insufficient evidence</text>
+
+  <!-- Offline measurement -->
+  <rect x="520" y="570" width="170" height="76" class="node" fill="#78350f" stroke="#fbbf24"/>
+  <text x="540" y="599" class="label">OFFLINE RAG EVAL</text>
+  <text x="540" y="622" class="small">recall · citation · faithfulness</text>
+  <text x="540" y="640" class="tiny">abstention accuracy</text>
+
+  <!-- Legend and provenance -->
+  <text x="48" y="700" class="small">ARROWS</text>
+  <line x1="112" y1="696" x2="158" y2="696" class="data"/><text x="176" y="700" class="tiny">dataset / evidence</text>
+  <line x1="340" y1="696" x2="386" y2="696" class="runtime"/><text x="404" y="700" class="tiny">runtime request</text>
+  <line x1="556" y1="696" x2="602" y2="696" class="offline"/><text x="620" y="700" class="tiny">offline measurement</text>
+  <line x1="806" y1="696" x2="852" y2="696" class="remote"/><text x="870" y="700" class="tiny">optional remote egress</text>
+  <text x="48" y="734" class="tiny">Storage: LOCAL_AI_STORAGE_ROOT or ~/.local/share/local-ai-agent · Chroma is embedded; no Chroma HTTP server is started.</text>
+</svg>

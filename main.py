@@ -1,10 +1,16 @@
 import argparse
+import json
 import sys
 from collections.abc import Sequence
 from datetime import date
 from pathlib import Path
 
 from agent import answer_question, create_chat_model
+from evaluation import (
+    DEFAULT_EVALUATION_PATH,
+    load_evaluation_cases,
+    run_rag_evaluation,
+)
 from ollama_health import (
     DEFAULT_CHAT_MODEL,
     DEFAULT_EMBEDDING_MODEL,
@@ -13,7 +19,6 @@ from ollama_health import (
 )
 from vector import (
     DEFAULT_DATA_PATH,
-    DEFAULT_DATABASE_PATH,
     ReviewDataError,
     create_vector_store,
     load_reviews,
@@ -31,7 +36,11 @@ def _date_argument(value: str) -> date:
 
 def _add_runtime_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--data", type=Path, default=DEFAULT_DATA_PATH)
-    parser.add_argument("--database", type=Path, default=DEFAULT_DATABASE_PATH)
+    parser.add_argument(
+        "--database",
+        type=Path,
+        help="override the automatically isolated Chroma database path",
+    )
     parser.add_argument("--ollama-host", default=DEFAULT_OLLAMA_HOST)
     parser.add_argument("--chat-model", default=DEFAULT_CHAT_MODEL)
     parser.add_argument("--embedding-model", default=DEFAULT_EMBEDDING_MODEL)
@@ -63,6 +72,13 @@ def build_parser() -> argparse.ArgumentParser:
     ask_parser.add_argument("question")
     _add_runtime_arguments(ask_parser)
     _add_search_arguments(ask_parser)
+
+    evaluate_parser = subparsers.add_parser(
+        "evaluate", help="Measure the bundled RAG evaluation set"
+    )
+    evaluate_parser.add_argument("--cases", type=Path, default=DEFAULT_EVALUATION_PATH)
+    evaluate_parser.add_argument("--limit", type=int, default=5)
+    _add_runtime_arguments(evaluate_parser)
 
     chat_parser = subparsers.add_parser("chat", help="Start the interactive terminal")
     _add_runtime_arguments(chat_parser)
@@ -149,6 +165,24 @@ def run(arguments: argparse.Namespace) -> int:
     if not health.ok:
         _print_health(health)
         return 1
+
+    if arguments.command == "evaluate":
+        vector_store, model = _create_runtime(arguments)
+        cases = load_evaluation_cases(arguments.cases)
+        metrics, observations = run_rag_evaluation(
+            cases,
+            vector_store=vector_store,
+            model=model,
+            limit=arguments.limit,
+        )
+        print(json.dumps(metrics.as_dict(), indent=2, sort_keys=True))
+        for observation in observations:
+            print(
+                f"{observation.case_id}: retrieved={len(observation.retrieved_source_ids)} "
+                f"cited={len(observation.cited_source_ids)} "
+                f"abstained={observation.abstained}"
+            )
+        return 0
 
     if arguments.command == "ask":
         _answer(arguments, arguments.question)

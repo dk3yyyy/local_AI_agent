@@ -12,6 +12,7 @@ from vector import (
     ColumnMapping,
     ReviewDataError,
     create_vector_store,
+    dataset_fingerprint,
     dataset_summary,
     detect_column_mapping,
     filter_reviews,
@@ -179,6 +180,24 @@ class AdaptiveSchemaTest(unittest.TestCase):
 
         self.assertEqual([match.document.id for match in matches], ["a"])
 
+    def test_dataset_fingerprint_is_identical_before_and_after_normalization(
+        self,
+    ) -> None:
+        dataframe = pd.DataFrame(
+            {
+                "Review": ["Excellent lunch"],
+                "Country": ["Ghana"],
+                "Order ID": [123],
+            }
+        )
+        mapping = ColumnMapping(review="Review", country="Country")
+        normalized = load_reviews(dataframe, mapping=mapping)
+
+        self.assertEqual(
+            dataset_fingerprint(dataframe),
+            dataset_fingerprint(normalized),
+        )
+
     def test_vector_metadata_retains_adaptive_fields_and_extras(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             store = create_vector_store(
@@ -187,7 +206,7 @@ class AdaptiveSchemaTest(unittest.TestCase):
                 collection_name="adaptive_schema",
                 embeddings=DeterministicEmbeddings(),
             )
-            result = store.get(ids=["0"], include=["metadatas", "documents"])
+            result = store.get(include=["metadatas", "documents"])
 
         metadata = result["metadatas"][0]
         self.assertEqual(metadata["sentiment"], "Positive")
@@ -255,7 +274,7 @@ class AdaptiveSchemaTest(unittest.TestCase):
                 collection_name="extra_collision",
                 embeddings=DeterministicEmbeddings(),
             )
-            result = store.get(ids=["0"], include=["metadatas", "documents"])
+            result = store.get(include=["metadatas", "documents"])
 
         metadata = result["metadatas"][0]
         self.assertEqual(metadata["extra_orderid"], "first")

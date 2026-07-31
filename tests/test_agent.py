@@ -2,11 +2,17 @@ import unittest
 
 from langchain_core.documents import Document
 
-from agent import NO_MATCH_MESSAGE, answer_question
+from agent import (
+    CITATION_VALIDATION_MESSAGE,
+    NO_MATCH_MESSAGE,
+    answer_question,
+)
 
 
 class FakeModel:
-    def __init__(self, response: str = "The crust receives strong praise.") -> None:
+    def __init__(
+        self, response: str = "The crust receives strong praise [review-1]."
+    ) -> None:
         self.response = response
         self.prompts: list[str] = []
 
@@ -43,13 +49,65 @@ class AnswerQuestionTest(unittest.TestCase):
             model=model,
         )
 
-        self.assertEqual(result.answer, "The crust receives strong praise.")
+        self.assertEqual(result.answer, "The crust receives strong praise [1].")
+        self.assertEqual(result.retrieved_source_ids, ("review-1",))
+        self.assertFalse(result.abstained)
         self.assertEqual(len(result.sources), 1)
         self.assertEqual(result.sources[0].citation_number, 1)
         self.assertEqual(result.sources[0].document.id, "review-1")
-        self.assertIn("[1]", model.prompts[0])
+        self.assertIn("[review-1]", model.prompts[0])
         self.assertIn("Great crust Crisp and flavorful.", model.prompts[0])
         self.assertIn("only the supplied reviews", model.prompts[0])
+
+    def test_rejects_citations_that_were_not_retrieved(self) -> None:
+        document = Document(
+            page_content="Great crust Crisp and flavorful.",
+            metadata={"source_id": "review-1"},
+            id="review-1",
+        )
+
+        result = answer_question(
+            "What do guests say about the crust?",
+            vector_store=FakeStore([(document, 0.12)]),
+            model=FakeModel("Unsupported claim [review-999]."),
+        )
+
+        self.assertEqual(result.answer, CITATION_VALIDATION_MESSAGE)
+        self.assertEqual(result.sources, ())
+
+    def test_rejects_uncited_model_answers(self) -> None:
+        document = Document(
+            page_content="Great crust Crisp and flavorful.",
+            metadata={"source_id": "review-1"},
+            id="review-1",
+        )
+
+        result = answer_question(
+            "What do guests say about the crust?",
+            vector_store=FakeStore([(document, 0.12)]),
+            model=FakeModel("The crust receives strong praise."),
+        )
+
+        self.assertEqual(result.answer, CITATION_VALIDATION_MESSAGE)
+        self.assertEqual(result.sources, ())
+
+    def test_model_can_abstain_when_retrieved_reviews_are_insufficient(self) -> None:
+        document = Document(
+            page_content="A review about pizza crust.",
+            metadata={"source_id": "review-1"},
+            id="review-1",
+        )
+
+        result = answer_question(
+            "Is parking available?",
+            vector_store=FakeStore([(document, 0.5)]),
+            model=FakeModel("INSUFFICIENT_EVIDENCE"),
+        )
+
+        self.assertEqual(result.answer, NO_MATCH_MESSAGE)
+        self.assertEqual(result.sources, ())
+        self.assertEqual(result.retrieved_source_ids, ("review-1",))
+        self.assertTrue(result.abstained)
 
     def test_does_not_call_model_when_filters_match_no_reviews(self) -> None:
         model = FakeModel()
@@ -62,6 +120,8 @@ class AnswerQuestionTest(unittest.TestCase):
 
         self.assertEqual(result.answer, NO_MATCH_MESSAGE)
         self.assertEqual(result.sources, ())
+        self.assertEqual(result.retrieved_source_ids, ())
+        self.assertFalse(result.abstained)
         self.assertEqual(model.prompts, [])
 
 

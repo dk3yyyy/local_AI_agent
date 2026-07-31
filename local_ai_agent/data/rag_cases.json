@@ -1,0 +1,45 @@
+[
+  {
+    "id": "crispy-crust",
+    "question": "Do guests describe the pizza crust as crispy?",
+    "relevant_titles": ["Best pizza in town"],
+    "reference_facts": [
+      {
+        "answer_terms": ["crispy", "crisp"],
+        "source_terms": ["perfectly crispy"]
+      }
+    ]
+  },
+  {
+    "id": "vegan-cheese",
+    "question": "What do reviewers say about the vegan cheese options?",
+    "relevant_titles": [
+      "Hidden gem for vegans",
+      "Tasteless cheese substitute"
+    ],
+    "reference_facts": [
+      {
+        "answer_terms": ["vegan cheese", "cashew cheese"],
+        "source_terms": ["cashew cheese", "vegan cheese option"]
+      }
+    ]
+  },
+  {
+    "id": "dessert-pizza",
+    "question": "Do the reviews mention dessert pizza?",
+    "relevant_titles": ["Outstanding variety of options"],
+    "reference_facts": [
+      {
+        "answer_terms": ["dessert", "Nutella"],
+        "source_terms": ["dessert pizzas", "Nutella and banana"]
+      }
+    ]
+  },
+  {
+    "id": "parking-abstention",
+    "question": "Is parking available at the restaurant?",
+    "relevant_titles": [],
+    "reference_facts": [],
+    "should_abstain": true
+  }
+]

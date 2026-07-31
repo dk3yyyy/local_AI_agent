@@ -1,6 +1,10 @@
+import json
+import os
 import re
 from dataclasses import dataclass
 from datetime import date
+from hashlib import sha256
+from importlib.resources import files
 from pathlib import Path
 from typing import IO, Any, cast
 
@@ -10,8 +14,16 @@ from langchain_core.documents import Document
 from langchain_ollama import OllamaEmbeddings
 
 PROJECT_ROOT = Path(__file__).resolve().parent
-DEFAULT_DATA_PATH = PROJECT_ROOT / "realistic_restaurant_reviews.csv"
-DEFAULT_DATABASE_PATH = PROJECT_ROOT / "chrome_langchain_db"
+DEFAULT_DATA_PATH = Path(
+    str(files("local_ai_agent.data").joinpath("realistic_restaurant_reviews.csv"))
+)
+DEFAULT_STORAGE_ROOT = Path(
+    os.getenv(
+        "LOCAL_AI_STORAGE_ROOT",
+        str(Path.home() / ".local" / "share" / "local-ai-agent"),
+    )
+)
+DEFAULT_DATABASE_PATH = DEFAULT_STORAGE_ROOT / "chroma"
 DEFAULT_COLLECTION_NAME = "restaurant_reviews"
 DEFAULT_EMBEDDING_MODEL = "mxbai-embed-large"
 CANONICAL_COLUMNS = (
@@ -357,9 +369,51 @@ def _metadata_value(value: Any) -> str | int | float | bool | None:
     return str(value)
 
 
+def _record_payload(row: pd.Series) -> str:
+    canonical = {column: _metadata_value(row[column]) for column in CANONICAL_COLUMNS}
+    extras = sorted((str(key), str(value)) for key, value in row["_extra"].items())
+    return json.dumps(
+        {"canonical": canonical, "extras": extras},
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
+
+def _record_digest(row: pd.Series) -> str:
+    return sha256(_record_payload(row).encode("utf-8")).hexdigest()
+
+
+def dataset_fingerprint(dataframe: pd.DataFrame) -> str:
+    """Return an order-insensitive digest of normalized review content."""
+    required = set(CANONICAL_COLUMNS) | {"_extra"}
+    if (
+        required <= set(dataframe.columns)
+        and dataframe["_extra"].map(lambda value: isinstance(value, dict)).all()
+    ):
+        normalized = dataframe
+    else:
+        normalized = load_reviews(dataframe)
+    record_digests = sorted(_record_digest(row) for _, row in normalized.iterrows())
+    payload = json.dumps(record_digests, separators=(",", ":")).encode("utf-8")
+    return sha256(payload).hexdigest()
+
+
+def dataset_storage(
+    dataframe: pd.DataFrame,
+    *,
+    storage_root: str | Path | None = None,
+) -> tuple[Path, str]:
+    """Derive an isolated persistence path and collection from dataset content."""
+    digest = dataset_fingerprint(dataframe)
+    root = Path(storage_root) if storage_root is not None else DEFAULT_STORAGE_ROOT
+    return root / "chroma" / digest, f"reviews_{digest[:16]}"
+
+
 def _documents_and_ids(dataframe: pd.DataFrame) -> tuple[list[Document], list[str]]:
     documents: list[Document] = []
     ids: list[str] = []
+    occurrences: dict[str, int] = {}
     metadata_fields = {
         "Title": "title",
         "Date": "date",
@@ -368,9 +422,13 @@ def _documents_and_ids(dataframe: pd.DataFrame) -> tuple[list[Document], list[st
         "Restaurant": "restaurant",
         "Country": "country",
     }
-    for index, row in dataframe.iterrows():
-        item_id = str(index)
-        metadata: dict[str, str | int | float | bool] = {}
+    for _, row in dataframe.iterrows():
+        digest = _record_digest(row)
+        occurrence = occurrences.get(digest, 0) + 1
+        occurrences[digest] = occurrence
+        suffix = f"_{occurrence}" if occurrence > 1 else ""
+        item_id = f"review_{digest[:32]}{suffix}"
+        metadata: dict[str, str | int | float | bool] = {"source_id": item_id}
         content_lines: list[str] = []
         for canonical, key in metadata_fields.items():
             value = _metadata_value(row[canonical])
@@ -413,26 +471,34 @@ def create_vector_store(
     source: ReviewSource = DEFAULT_DATA_PATH,
     *,
     mapping: ColumnMapping | None = None,
-    database_path: str | Path = DEFAULT_DATABASE_PATH,
-    collection_name: str = DEFAULT_COLLECTION_NAME,
+    database_path: str | Path | None = None,
+    collection_name: str | None = None,
     embeddings: Any | None = None,
     embedding_model: str = DEFAULT_EMBEDDING_MODEL,
     ollama_host: str | None = None,
 ) -> Chroma:
-    """Open a Chroma collection and index only reviews that are missing."""
+    """Open an isolated Chroma collection and reconcile it with the source."""
     dataframe = load_reviews(source, mapping=mapping)
+    derived_database, derived_collection = dataset_storage(dataframe)
+    resolved_database = Path(database_path) if database_path else derived_database
+    resolved_collection = collection_name or derived_collection
     documents, ids = _documents_and_ids(dataframe)
     embedding_function = embeddings or create_embeddings(
         model=embedding_model,
         base_url=ollama_host,
     )
     vector_store = Chroma(
-        collection_name=collection_name,
-        persist_directory=str(Path(database_path)),
+        collection_name=resolved_collection,
+        persist_directory=str(resolved_database),
         embedding_function=embedding_function,
     )
 
-    existing_ids = set(vector_store.get(ids=ids, include=[])["ids"])
+    desired_ids = set(ids)
+    existing_ids = set(vector_store.get(include=[])["ids"])
+    stale_ids = sorted(existing_ids - desired_ids)
+    if stale_ids:
+        vector_store.delete(ids=stale_ids)
+
     missing_indexes = [
         index for index, item_id in enumerate(ids) if item_id not in existing_ids
     ]

@@ -38,3 +38,9 @@ jobs:
         run: |
           uvx --from ruff==0.16.1 ruff check .
           uvx --from ruff==0.16.1 ruff format --check .
+
+      - name: Build and smoke-test package
+        if: matrix.python-version == '3.11'
+        run: |
+          uv build
+          uvx --from dist/local_ai_agent-*.whl local-ai-agent --help

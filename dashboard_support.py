@@ -8,13 +8,11 @@ from pathlib import Path
 import pandas as pd
 
 from vector import (
-    PROJECT_ROOT,
+    DEFAULT_STORAGE_ROOT,
     ColumnMapping,
     detect_column_mapping,
     load_reviews,
 )
-
-DEFAULT_STORAGE_ROOT = PROJECT_ROOT / ".local_data"
 
 
 @dataclass(frozen=True)
