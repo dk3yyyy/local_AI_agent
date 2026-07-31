@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+import warnings
 from datetime import date
 from pathlib import Path
 
@@ -261,6 +262,23 @@ class AdaptiveSchemaTest(unittest.TestCase):
         self.assertEqual(metadata["extra_orderid_2"], "second")
         self.assertIn("Order ID: first", result["documents"][0])
         self.assertIn("order_id: second", result["documents"][0])
+
+    def test_invalid_dates_fail_without_format_inference_warning(self) -> None:
+        dataframe = pd.DataFrame(
+            {
+                "Review": ["Invalid date", "Valid date"],
+                "Review Date": ["unknown", "2026-01-02"],
+            }
+        )
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            with self.assertRaisesRegex(ReviewDataError, "valid date"):
+                load_reviews(dataframe)
+
+        self.assertFalse(
+            any("Could not infer format" in str(item.message) for item in caught)
+        )
 
 
 if __name__ == "__main__":
