@@ -14,7 +14,7 @@ Review data and model prompts stay on your machine. No hosted model API is requi
 - **Visual dashboard:** rating metrics, distribution chart, date and rating filters, and review browser.
 - **Grounded answers:** the model receives only retrieved reviews and returns numbered citations.
 - **Safe offline state:** analytics still load when Ollama is unavailable, while the app shows exact setup commands instead of crashing.
-- **CSV upload:** validated datasets receive isolated, content-addressed Chroma storage.
+- **Adaptive CSV upload:** automatically detect common headers, manually map unfamiliar names, and isolate each schema in content-addressed Chroma storage.
 - **Incremental indexing:** only missing review IDs are embedded, including recovery after an interrupted first run.
 - **Terminal interface:** health, one-shot question, and interactive chat commands use the same tested core.
 - **Local execution:** Ollama handles both embeddings and answer generation.
@@ -73,18 +73,30 @@ The dashboard can immediately display dataset metrics and reviews. AI questions 
 ## Dashboard workflow
 
 1. Use the bundled 123-review dataset or upload a CSV.
-2. Choose a rating range and date range.
-3. Review the deterministic metrics, rating distribution, and matching rows.
-4. Ask a question in the chat box.
-5. Expand the evidence citations beneath the answer.
+2. Confirm the suggested column mapping. Only review text is required.
+3. Filter by any mapped ratings, dates, sentiments, restaurants, or countries.
+4. Review the adaptive metrics, distribution chart, and matching rows.
+5. Ask a question and expand the source records beneath the answer.
 
-Uploaded files must contain these columns:
+Common headers are detected automatically, including:
+
+| Role | Examples |
+| --- | --- |
+| Review text | `Review`, `Review Text`, `Feedback`, `Comment`, `Body` |
+| Title | `Title`, `Review Title`, `Headline`, `Subject` |
+| Date | `Date`, `Review Date`, `Published On`, `Created At` |
+| Rating | `Rating`, `Stars`, `Score`, `Review Score` |
+| Sentiment | `Sentiment`, `Polarity`, `Label` |
+| Restaurant | `Restaurant Name`, `Restaurant`, `Venue`, `Business` |
+| Country | `Country`, `Nation`, `Market`, `Region` |
+
+For unfamiliar names, select the role manually in the mapping panel. Unmapped columns are preserved as source metadata and included in indexed context. A dataset such as this works without a rating column:
 
 ```text
-Title, Date, Rating, Review
+Country,Restaurant Name,Sentiment,Review Title,Review Date,Review
 ```
 
-Validation rejects missing values, empty text, malformed dates, and ratings outside the integer range 1 through 5. Uploads are limited to 10 MB.
+Review text cannot be empty. Mapped ratings must be integers from 1 through 5, and supplied mapped dates must be valid. Uploads are limited to 10 MB.
 
 ## Terminal commands
 
@@ -112,7 +124,7 @@ The original no-argument command remains equivalent to `chat`:
 uv run python main.py
 ```
 
-Use `--help` on the main command or a subcommand to see model, host, dataset, rating, date, and evidence-limit options.
+Use `--help` on the main command or a subcommand to see model, host, dataset, rating, date, sentiment, restaurant, country, and evidence-limit options. The CLI auto-detects recognized aliases; use the dashboard mapping panel for unfamiliar column names.
 
 ## Configuration
 
@@ -123,12 +135,13 @@ The defaults can be changed through command options, dashboard controls, or thes
 | `OLLAMA_HOST` | `http://localhost:11434` |
 | `CHAT_MODEL` | `llama3.2` |
 | `EMBEDDING_MODEL` | `mxbai-embed-large` |
+| `LOCAL_AI_STORAGE_ROOT` | `.local_data/` inside the project |
 
 ## Storage and indexing
 
 The bundled dataset uses `chrome_langchain_db/`. Validated uploads are saved under `.local_data/uploads/`, while their isolated vector collections live under `.local_data/chroma/`.
 
-Both locations are excluded from Git. Uploaded datasets use a SHA-256 content hash, so identical files reuse the same storage and different datasets cannot overwrite one another.
+Both locations are excluded from Git. Uploaded datasets use a SHA-256 hash of the file content and confirmed mapping. Identical files with the same mapping reuse storage, while different files or interpretations cannot overwrite one another.
 
 On startup, indexing compares source review IDs with IDs already stored in Chroma. Missing reviews are embedded and existing reviews are left untouched. If an embedding run fails after the database is created, the next attempt retries the missing reviews.
 
@@ -144,9 +157,10 @@ uv run python -m unittest discover -s tests -v
 
 The suite covers:
 
-- dataset validation and metrics;
+- schema alias detection and manual column mapping;
+- optional rating, date, sentiment, restaurant, and country fields;
 - Chroma recovery and incremental indexing;
-- rating and date filtering;
+- adaptive rating, date, and categorical filtering;
 - Ollama health states;
 - grounded prompt and citation construction;
 - deterministic upload storage;
@@ -181,9 +195,10 @@ GitHub Actions runs the tests on Python 3.11 and Python 3.14.
 ## Current limitations
 
 - Semantic questions require a live local Ollama service and both configured models.
-- Rating and date filters are applied after semantic ranking. This is suitable for the bundled dataset but not optimized for very large collections.
-- Uploaded datasets must follow the documented four-column schema.
-- Sentiment classification, topic modeling, hybrid keyword retrieval, reranking, and formal RAG evaluation are not implemented yet.
+- Rating, date, sentiment, restaurant, and country filters are applied after semantic ranking. This is suitable for small local datasets but not optimized for very large collections.
+- Automatic mapping is conservative. Unfamiliar or ambiguous headers require confirmation in the dashboard.
+- Sentiment labels are displayed and filtered as supplied. The application does not infer sentiment when the dataset lacks a sentiment column.
+- Topic modeling, hybrid keyword retrieval, reranking, and formal RAG evaluation are not implemented yet.
 - The application is intended for local use and does not provide authentication or multi-user isolation.
 
 ## License

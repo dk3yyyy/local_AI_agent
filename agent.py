@@ -12,15 +12,15 @@ NO_MATCH_MESSAGE = (
     "I could not find any reviews matching the current question and filters."
 )
 
-ANSWER_PROMPT = """You are a restaurant review analyst.
+ANSWER_PROMPT = """You are a review analyst.
 Answer the question using only the supplied reviews. Do not add facts that are not present.
-When evidence is mixed or limited, say so clearly. Cite supporting reviews with bracketed
+When evidence is mixed or limited, say so clearly. Cite supporting records with bracketed
 numbers such as [1] or [2].
 
 Question:
 {question}
 
-Supplied reviews:
+Supplied review records:
 {context}
 
 Answer:
@@ -50,17 +50,23 @@ def create_chat_model(
 
 def _format_context(matches: list[ReviewMatch]) -> str:
     sections: list[str] = []
+    labels = (
+        ("rating", "Rating"),
+        ("date", "Date"),
+        ("sentiment", "Sentiment"),
+        ("restaurant", "Restaurant"),
+        ("country", "Country"),
+    )
     for number, match in enumerate(matches, start=1):
         metadata = match.document.metadata
-        sections.append(
-            "\n".join(
-                (
-                    f"[{number}] Rating: {metadata.get('rating', 'unknown')}/5",
-                    f"Date: {metadata.get('date', 'unknown')}",
-                    match.document.page_content,
-                )
-            )
-        )
+        lines = [f"[{number}]"]
+        for key, label in labels:
+            value = metadata.get(key)
+            if value is not None:
+                suffix = "/5" if key == "rating" else ""
+                lines.append(f"{label}: {value}{suffix}")
+        lines.append(match.document.page_content)
+        sections.append("\n".join(lines))
     return "\n\n".join(sections)
 
 
@@ -70,10 +76,13 @@ def answer_question(
     vector_store: Any,
     model: Any | None = None,
     limit: int = 5,
-    min_rating: int = 1,
-    max_rating: int = 5,
+    min_rating: int | None = None,
+    max_rating: int | None = None,
     start_date: date | None = None,
     end_date: date | None = None,
+    sentiments: tuple[str, ...] | list[str] = (),
+    restaurants: tuple[str, ...] | list[str] = (),
+    countries: tuple[str, ...] | list[str] = (),
     chat_model: str = DEFAULT_CHAT_MODEL,
     ollama_host: str = DEFAULT_OLLAMA_HOST,
 ) -> AnswerResult:
@@ -90,6 +99,9 @@ def answer_question(
         max_rating=max_rating,
         start_date=start_date,
         end_date=end_date,
+        sentiments=sentiments,
+        restaurants=restaurants,
+        countries=countries,
     )
     if not matches:
         return AnswerResult(answer=NO_MATCH_MESSAGE, sources=())
