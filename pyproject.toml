@@ -3,11 +3,10 @@ name = "local-ai-agent"
 version = "0.1.0"
 description = "A local AI agent using Ollama embeddings and ChromaDB for restaurant review retrieval"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.11"
 dependencies = [
     "langchain>=1.2.17",
     "langchain-chroma>=1.1.0",
     "langchain-ollama>=1.1.0",
-    "panda>=0.3.1",
     "pandas>=3.0.2",
 ]
