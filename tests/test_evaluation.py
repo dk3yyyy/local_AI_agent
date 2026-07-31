@@ -1,13 +1,56 @@
 import unittest
 
+from langchain_core.documents import Document
+
 from evaluation import (
     DEFAULT_EVALUATION_PATH,
     EvaluationCase,
     EvaluationObservation,
     ReferenceFact,
     load_evaluation_cases,
+    run_rag_evaluation,
     score_evaluation,
 )
+
+
+class FakeResponse:
+    def __init__(self, content: str) -> None:
+        self.content = content
+
+
+class EvaluationModel:
+    def __init__(self, response: str) -> None:
+        self.response = response
+        self.prompts: list[str] = []
+
+    def invoke(self, prompt: str) -> FakeResponse:
+        self.prompts.append(prompt)
+        return FakeResponse(self.response)
+
+
+class EvaluationStore:
+    def __init__(self, *, return_matches: bool = True) -> None:
+        self.search_calls = 0
+        self.document = Document(
+            page_content="The crust was perfectly crispy.",
+            metadata={"source_id": "review-a", "title": "Best pizza"},
+            id="review-a",
+        )
+        self.return_matches = return_matches
+
+    def get(self, **_: object) -> dict[str, list[object]]:
+        return {
+            "ids": ["review-a"],
+            "metadatas": [self.document.metadata],
+        }
+
+    def similarity_search_with_score(
+        self, query: str, *, k: int
+    ) -> list[tuple[Document, float]]:
+        self.search_calls += 1
+        if not self.return_matches:
+            return []
+        return [(self.document, 0.9)]
 
 
 class RAGEvaluationTest(unittest.TestCase):
@@ -67,6 +110,50 @@ class RAGEvaluationTest(unittest.TestCase):
         self.assertEqual(metrics.answer_faithfulness, 1.0)
         self.assertEqual(metrics.abstention_accuracy, 1.0)
         self.assertEqual(metrics.case_count, 2)
+
+    def test_pipeline_reuses_the_exact_answer_retrieval(self) -> None:
+        case = EvaluationCase(
+            case_id="answer",
+            question="Is the crust crisp?",
+            relevant_titles=("Best pizza",),
+            reference_facts=(
+                ReferenceFact(
+                    answer_terms=("crispy",),
+                    source_terms=("perfectly crispy",),
+                ),
+            ),
+        )
+        store = EvaluationStore()
+        model = EvaluationModel("Guests describe it as crispy [review-a].")
+
+        metrics, observations = run_rag_evaluation(
+            (case,), vector_store=store, model=model
+        )
+
+        self.assertEqual(store.search_calls, 1)
+        self.assertEqual(observations[0].retrieved_source_ids, ("review-a",))
+        self.assertEqual(observations[0].cited_source_ids, ("review-a",))
+        self.assertEqual(metrics.citation_correctness, 1.0)
+
+    def test_empty_retrieval_is_not_counted_as_model_abstention(self) -> None:
+        case = EvaluationCase(
+            case_id="abstain",
+            question="Is parking available?",
+            relevant_titles=(),
+            reference_facts=(),
+            should_abstain=True,
+        )
+        store = EvaluationStore(return_matches=False)
+        model = EvaluationModel("INSUFFICIENT_EVIDENCE")
+
+        metrics, observations = run_rag_evaluation(
+            (case,), vector_store=store, model=model
+        )
+
+        self.assertEqual(store.search_calls, 1)
+        self.assertFalse(observations[0].abstained)
+        self.assertEqual(model.prompts, [])
+        self.assertEqual(metrics.abstention_accuracy, 0.0)
 
     def test_penalizes_missing_retrieval_invalid_citation_and_false_answer(
         self,

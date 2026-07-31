@@ -50,6 +50,8 @@ class AnswerQuestionTest(unittest.TestCase):
         )
 
         self.assertEqual(result.answer, "The crust receives strong praise [1].")
+        self.assertEqual(result.retrieved_source_ids, ("review-1",))
+        self.assertFalse(result.abstained)
         self.assertEqual(len(result.sources), 1)
         self.assertEqual(result.sources[0].citation_number, 1)
         self.assertEqual(result.sources[0].document.id, "review-1")
@@ -104,6 +106,8 @@ class AnswerQuestionTest(unittest.TestCase):
 
         self.assertEqual(result.answer, NO_MATCH_MESSAGE)
         self.assertEqual(result.sources, ())
+        self.assertEqual(result.retrieved_source_ids, ("review-1",))
+        self.assertTrue(result.abstained)
 
     def test_does_not_call_model_when_filters_match_no_reviews(self) -> None:
         model = FakeModel()
@@ -116,6 +120,8 @@ class AnswerQuestionTest(unittest.TestCase):
 
         self.assertEqual(result.answer, NO_MATCH_MESSAGE)
         self.assertEqual(result.sources, ())
+        self.assertEqual(result.retrieved_source_ids, ())
+        self.assertFalse(result.abstained)
         self.assertEqual(model.prompts, [])
 
 

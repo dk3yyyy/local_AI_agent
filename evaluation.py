@@ -5,8 +5,7 @@ from importlib.resources import files
 from pathlib import Path
 from typing import Any
 
-from agent import NO_MATCH_MESSAGE, answer_question
-from vector import search_reviews
+from agent import answer_question
 
 DEFAULT_EVALUATION_PATH = Path(
     str(files("local_ai_agent.data").joinpath("rag_cases.json"))
@@ -174,7 +173,6 @@ def run_rag_evaluation(
             for title in case.relevant_titles
             for source_id in title_to_ids[title]
         )
-        matches = search_reviews(vector_store, case.question, limit=limit)
         result = answer_question(
             case.question,
             vector_store=vector_store,
@@ -185,9 +183,7 @@ def run_rag_evaluation(
             EvaluationObservation(
                 case_id=case.case_id,
                 relevant_source_ids=relevant_ids,
-                retrieved_source_ids=tuple(
-                    _source_id(match.document) for match in matches
-                ),
+                retrieved_source_ids=result.retrieved_source_ids,
                 cited_source_ids=tuple(
                     _source_id(source.document) for source in result.sources
                 ),
@@ -195,7 +191,7 @@ def run_rag_evaluation(
                     source.document.page_content for source in result.sources
                 ),
                 answer=result.answer,
-                abstained=result.answer == NO_MATCH_MESSAGE,
+                abstained=result.abstained,
             )
         )
 

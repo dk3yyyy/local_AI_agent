@@ -45,6 +45,8 @@ class CitedReview:
 class AnswerResult:
     answer: str
     sources: tuple[CitedReview, ...]
+    retrieved_source_ids: tuple[str, ...] = ()
+    abstained: bool = False
 
 
 def create_chat_model(
@@ -152,6 +154,13 @@ def answer_question(
     if not matches:
         return AnswerResult(answer=NO_MATCH_MESSAGE, sources=())
 
+    retrieved_source_ids = tuple(
+        str(match.document.metadata.get("source_id") or match.document.id or "")
+        for match in matches
+    )
+    if any(not source_id for source_id in retrieved_source_ids):
+        return AnswerResult(answer=CITATION_VALIDATION_MESSAGE, sources=())
+
     answer_model = model or create_chat_model(model=chat_model, base_url=ollama_host)
     prompt = ANSWER_PROMPT.format(
         question=normalized_question,
@@ -161,9 +170,22 @@ def answer_question(
     answer = response.content if hasattr(response, "content") else str(response)
     normalized_answer = answer.strip()
     if normalized_answer == INSUFFICIENT_EVIDENCE_TOKEN:
-        return AnswerResult(answer=NO_MATCH_MESSAGE, sources=())
+        return AnswerResult(
+            answer=NO_MATCH_MESSAGE,
+            sources=(),
+            retrieved_source_ids=retrieved_source_ids,
+            abstained=True,
+        )
     validated = _validate_and_number_citations(normalized_answer, matches)
     if validated is None:
-        return AnswerResult(answer=CITATION_VALIDATION_MESSAGE, sources=())
+        return AnswerResult(
+            answer=CITATION_VALIDATION_MESSAGE,
+            sources=(),
+            retrieved_source_ids=retrieved_source_ids,
+        )
     validated_answer, sources = validated
-    return AnswerResult(answer=validated_answer, sources=sources)
+    return AnswerResult(
+        answer=validated_answer,
+        sources=sources,
+        retrieved_source_ids=retrieved_source_ids,
+    )
