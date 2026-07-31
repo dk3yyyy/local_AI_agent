@@ -12,7 +12,7 @@ By default, runtime review data, embeddings, and prompts are processed by embedd
 ## Highlights
 
 - **Visual dashboard:** rating metrics, distribution chart, date and rating filters, and review browser.
-- **Validated citations:** the model cites stable retrieved source IDs; invented or missing citations fail safely.
+- **Validated citations:** short evidence citations map strictly to stable retrieved source IDs; invented or missing citations fail safely.
 - **Safe offline state:** analytics still load when Ollama is unavailable, while the app shows exact setup commands instead of crashing.
 - **Adaptive CSV upload:** automatically detect common headers, manually map unfamiliar names, and isolate every dataset in content-addressed Chroma storage.
 - **Reconciled indexing:** content-derived IDs survive reordering; additions, changed records, and deletions are synchronized safely.
@@ -173,7 +173,7 @@ The suite covers:
 - automatic database and collection isolation;
 - adaptive rating, date, and categorical filtering;
 - Ollama health states;
-- source-ID citation validation and model abstention;
+- evidence-alias-to-source citation validation and model abstention;
 - all four RAG evaluation metrics;
 - deterministic upload storage;
 - Streamlit rendering without Ollama.

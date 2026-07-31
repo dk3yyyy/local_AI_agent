@@ -21,7 +21,8 @@ INSUFFICIENT_EVIDENCE_TOKEN = "INSUFFICIENT_EVIDENCE"
 ANSWER_PROMPT = """You are a review analyst.
 Answer the question using only the supplied reviews. Do not add facts that are not present.
 When evidence is mixed or limited, say so clearly. Every factual claim must cite one or more
-retrieved source IDs exactly as shown, for example [review_ab12]. Never invent a source ID.
+retrieved evidence numbers exactly as shown, for example [1]. Never cite an evidence number
+that is not supplied. Source IDs are validation metadata; do not copy them into the answer.
 If the supplied reviews do not answer the question, reply exactly INSUFFICIENT_EVIDENCE.
 
 Question:
@@ -66,12 +67,12 @@ def _format_context(matches: list[ReviewMatch]) -> str:
         ("restaurant", "Restaurant"),
         ("country", "Country"),
     )
-    for match in matches:
+    for evidence_number, match in enumerate(matches, start=1):
         metadata = match.document.metadata
         source_id = str(metadata.get("source_id") or match.document.id or "")
         if not source_id:
             raise ValueError("retrieved review is missing a source ID")
-        lines = [f"[{source_id}]"]
+        lines = [f"[{evidence_number}]", f"Source ID: {source_id}"]
         for key, label in labels:
             value = metadata.get(key)
             if value is not None:
@@ -87,24 +88,35 @@ def _validate_and_number_citations(
     matches: list[ReviewMatch],
 ) -> tuple[str, tuple[CitedReview, ...]] | None:
     retrieved: dict[str, ReviewMatch] = {}
-    for match in matches:
+    evidence_aliases: dict[str, str] = {}
+    for evidence_number, match in enumerate(matches, start=1):
         source_id = str(
             match.document.metadata.get("source_id") or match.document.id or ""
         )
         if not source_id:
             return None
         retrieved[source_id] = match
+        evidence_aliases[str(evidence_number)] = source_id
 
-    cited_ids = CITATION_PATTERN.findall(answer)
-    if not cited_ids or any(source_id not in retrieved for source_id in cited_ids):
+    cited_tokens = CITATION_PATTERN.findall(answer)
+    if not cited_tokens:
         return None
 
-    ordered_ids = list(dict.fromkeys(cited_ids))
+    resolved_ids: list[str] = []
+    for token in cited_tokens:
+        source_id = evidence_aliases.get(token, token)
+        if source_id not in retrieved:
+            return None
+        resolved_ids.append(source_id)
+
+    ordered_ids = list(dict.fromkeys(resolved_ids))
     citation_numbers = {
         source_id: number for number, source_id in enumerate(ordered_ids, start=1)
     }
     numbered_answer = CITATION_PATTERN.sub(
-        lambda match: f"[{citation_numbers[match.group(1)]}]",
+        lambda match: (
+            f"[{citation_numbers[evidence_aliases.get(match.group(1), match.group(1))]}]"
+        ),
         answer,
     )
     sources = tuple(

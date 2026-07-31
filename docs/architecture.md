@@ -12,7 +12,7 @@ Runtime review data crosses these boundaries:
 2. **Identity layer:** hashes normalized record content and creates an order-independent dataset fingerprint.
 3. **Storage layer:** derives a separate Chroma database directory and collection from the dataset fingerprint. Re-indexing reconciles additions, changed records, and deletions.
 4. **Retrieval layer:** performs semantic search, then applies deterministic rating, date, sentiment, restaurant, and country filters.
-5. **Answer layer:** supplies retrieved source IDs to Ollama. An answer is returned only when every bracketed source ID was retrieved. Valid source IDs are converted to reader-facing citation numbers after validation.
+5. **Answer layer:** supplies numbered evidence records and their stable source IDs to Ollama. An answer is returned only when every bracketed evidence number maps to a retrieved record. Exact source-ID citations remain accepted for backward compatibility; validated references are rendered as reader-facing citation numbers.
 6. **Evaluation layer:** runs the curated cases in `local_ai_agent/data/rag_cases.json` and reports retrieval recall, citation correctness, reference-grounded answer faithfulness, and abstention accuracy.
 
 ## Storage identity

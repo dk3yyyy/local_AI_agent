@@ -55,9 +55,72 @@ class AnswerQuestionTest(unittest.TestCase):
         self.assertEqual(len(result.sources), 1)
         self.assertEqual(result.sources[0].citation_number, 1)
         self.assertEqual(result.sources[0].document.id, "review-1")
-        self.assertIn("[review-1]", model.prompts[0])
+        self.assertIn("[1]", model.prompts[0])
+        self.assertIn("Source ID: review-1", model.prompts[0])
         self.assertIn("Great crust Crisp and flavorful.", model.prompts[0])
         self.assertIn("only the supplied reviews", model.prompts[0])
+
+    def test_accepts_numeric_citation_for_the_matching_retrieved_review(self) -> None:
+        document = Document(
+            page_content="Phenomenal crust Crispy and flavorful.",
+            metadata={"source_id": "review-long-content-hash"},
+            id="review-long-content-hash",
+        )
+
+        result = answer_question(
+            "What did the review say about the phenomenal crust?",
+            vector_store=FakeStore([(document, 0.08)]),
+            model=FakeModel("The crust was crispy and flavorful [1]."),
+        )
+
+        self.assertEqual(result.answer, "The crust was crispy and flavorful [1].")
+        self.assertEqual(len(result.sources), 1)
+        self.assertEqual(result.sources[0].document.id, "review-long-content-hash")
+
+    def test_numeric_citations_resolve_to_the_correct_multiple_reviews(self) -> None:
+        first = Document(
+            page_content="The crust was crispy.",
+            metadata={"source_id": "review-a"},
+            id="review-a",
+        )
+        second = Document(
+            page_content="The crust was thin.",
+            metadata={"source_id": "review-b"},
+            id="review-b",
+        )
+
+        result = answer_question(
+            "What did guests say about the crust?",
+            vector_store=FakeStore([(first, 0.08), (second, 0.1)]),
+            model=FakeModel(
+                "One guest called it thin [2]; another called it crispy [1]."
+            ),
+        )
+
+        self.assertEqual(
+            result.answer,
+            "One guest called it thin [1]; another called it crispy [2].",
+        )
+        self.assertEqual(
+            [source.document.id for source in result.sources],
+            ["review-b", "review-a"],
+        )
+
+    def test_rejects_numeric_citation_outside_the_retrieved_set(self) -> None:
+        document = Document(
+            page_content="Phenomenal crust Crispy and flavorful.",
+            metadata={"source_id": "review-long-content-hash"},
+            id="review-long-content-hash",
+        )
+
+        result = answer_question(
+            "What did the review say about the phenomenal crust?",
+            vector_store=FakeStore([(document, 0.08)]),
+            model=FakeModel("Unsupported statement [2]."),
+        )
+
+        self.assertEqual(result.answer, CITATION_VALIDATION_MESSAGE)
+        self.assertEqual(result.sources, ())
 
     def test_rejects_citations_that_were_not_retrieved(self) -> None:
         document = Document(
