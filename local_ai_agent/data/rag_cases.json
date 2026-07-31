@@ -1,45 +1,887 @@
-[
-  {
-    "id": "crispy-crust",
-    "question": "Do guests describe the pizza crust as crispy?",
-    "relevant_titles": ["Best pizza in town"],
-    "reference_facts": [
-      {
-        "answer_terms": ["crispy", "crisp"],
-        "source_terms": ["perfectly crispy"]
-      }
-    ]
+{
+  "schema_version": "rag-eval-cases/2.0",
+  "evaluation_set_id": "bundled-restaurant-reviews-v2.0",
+  "dataset": {
+    "file": "realistic_restaurant_reviews.csv",
+    "sha256": "8ace5c1cb728c3c8a355d90a414849ebd645e021aae8a5b32303ef310917254e",
+    "row_count": 123,
+    "relevance_judgments": "known_positives_only"
   },
-  {
-    "id": "vegan-cheese",
-    "question": "What do reviewers say about the vegan cheese options?",
-    "relevant_titles": [
-      "Hidden gem for vegans",
-      "Tasteless cheese substitute"
-    ],
-    "reference_facts": [
-      {
-        "answer_terms": ["vegan cheese", "cashew cheese"],
-        "source_terms": ["cashew cheese", "vegan cheese option"]
-      }
-    ]
-  },
-  {
-    "id": "dessert-pizza",
-    "question": "Do the reviews mention dessert pizza?",
-    "relevant_titles": ["Outstanding variety of options"],
-    "reference_facts": [
-      {
-        "answer_terms": ["dessert", "Nutella"],
-        "source_terms": ["dessert pizzas", "Nutella and banana"]
-      }
-    ]
-  },
-  {
-    "id": "parking-abstention",
-    "question": "Is parking available at the restaurant?",
-    "relevant_titles": [],
-    "reference_facts": [],
-    "should_abstain": true
-  }
-]
+  "cases": [
+    {
+      "id": "crispy-crust",
+      "split": "test",
+      "category": "texture",
+      "difficulty": "hard",
+      "question": "Do guests describe the pizza crust as crispy while still having some chew?",
+      "expected_action": "answer",
+      "gold_source_ids": [
+        "review_a23134f6b63ffdb4c6fab9baa2cce095",
+        "review_13f6c41bf74292e7087a1a7ccf100c6d",
+        "review_cf6397aa45938d26e42aca081d576a93"
+      ],
+      "source_labels": [
+        "Best pizza in town",
+        "Phenomenal crust",
+        "Crispy yet chewy perfection"
+      ],
+      "reference_facts": [
+        {
+          "answer_terms": [
+            "crispy",
+            "crisp"
+          ],
+          "source_terms": [
+            "perfectly crispy",
+            "combination of crispy and chewy",
+            "crispy on the outside and chewy inside"
+          ]
+        },
+        {
+          "answer_terms": [
+            "chewy",
+            "chew"
+          ],
+          "source_terms": [
+            "chewy inside",
+            "slight sourdough tang",
+            "simultaneously crispy on the outside and chewy inside"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "vegan-cheese",
+      "split": "test",
+      "category": "dietary",
+      "difficulty": "medium",
+      "question": "What contrasting experiences do reviewers report about the vegan cheese?",
+      "expected_action": "answer",
+      "gold_source_ids": [
+        "review_20c52415ea843838a45b29821f7ba112",
+        "review_08222ec4bad55a761d23c3dddf0dae72"
+      ],
+      "source_labels": [
+        "Hidden gem for vegans",
+        "Tasteless cheese substitute"
+      ],
+      "reference_facts": [
+        {
+          "answer_terms": [
+            "cashew",
+            "melts",
+            "meltability"
+          ],
+          "source_terms": [
+            "cashew cheese",
+            "no meltability"
+          ]
+        },
+        {
+          "answer_terms": [
+            "grainy",
+            "coconut",
+            "negative"
+          ],
+          "source_terms": [
+            "grainy texture",
+            "tasted strongly of coconut"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dessert-pizza",
+      "split": "test",
+      "category": "menu",
+      "difficulty": "easy",
+      "question": "Do the reviews mention a dessert pizza, and which flavor is recommended?",
+      "expected_action": "answer",
+      "gold_source_ids": [
+        "review_f624da623120634ef3ae535a9501688c"
+      ],
+      "source_labels": [
+        "Outstanding variety of options"
+      ],
+      "reference_facts": [
+        {
+          "answer_terms": [
+            "dessert",
+            "Nutella"
+          ],
+          "source_terms": [
+            "dessert pizzas",
+            "Nutella and banana"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gluten-free-crust",
+      "split": "test",
+      "category": "dietary",
+      "difficulty": "easy",
+      "question": "What does the reviewer with celiac disease say about the gluten-free crust?",
+      "expected_action": "answer",
+      "gold_source_ids": [
+        "review_6464cf45ebbd480454abc07065075c3b"
+      ],
+      "source_labels": [
+        "Great gluten-free option"
+      ],
+      "reference_facts": [
+        {
+          "answer_terms": [
+            "cauliflower",
+            "doesn't fall apart",
+            "good"
+          ],
+          "source_terms": [
+            "celiac disease",
+            "cauliflower crust",
+            "doesn't fall apart"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "margherita-components",
+      "split": "test",
+      "category": "style",
+      "difficulty": "medium",
+      "question": "Which ingredients and cooking qualities are praised in the Margherita pizzas?",
+      "expected_action": "answer",
+      "gold_source_ids": [
+        "review_5117c8c073d626838c7798930f15b8e1",
+        "review_13809cb33172b3c40040348b296245df"
+      ],
+      "source_labels": [
+        "Authentic Italian experience",
+        "Excellence in simplicity"
+      ],
+      "reference_facts": [
+        {
+          "answer_terms": [
+            "tomato",
+            "mozzarella",
+            "basil"
+          ],
+          "source_terms": [
+            "buffalo mozzarella",
+            "fresh mozzarella",
+            "fragrant basil"
+          ]
+        },
+        {
+          "answer_terms": [
+            "char",
+            "crust"
+          ],
+          "source_terms": [
+            "perfect char",
+            "chewy-crisp crust"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hawaiian-pizza",
+      "split": "test",
+      "category": "menu",
+      "difficulty": "easy",
+      "question": "What makes the recommended Hawaiian pizza distinctive?",
+      "expected_action": "answer",
+      "gold_source_ids": [
+        "review_211ffae3b56d5e65fc7edc3f92143b12"
+      ],
+      "source_labels": [
+        "Best Hawaiian in the city"
+      ],
+      "reference_facts": [
+        {
+          "answer_terms": [
+            "pineapple",
+            "ham"
+          ],
+          "source_terms": [
+            "fresh pineapple",
+            "house-cured ham",
+            "sweet and salty balance"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "white-pizza",
+      "split": "test",
+      "category": "menu",
+      "difficulty": "medium",
+      "question": "What ingredients appear in the praised spinach and ricotta white pizzas?",
+      "expected_action": "answer",
+      "gold_source_ids": [
+        "review_a6014a29ee06cc625b8b71a2bf39759b",
+        "review_1615431adc386cbc8063f8a3e7983f10"
+      ],
+      "source_labels": [
+        "Best white pizza ever",
+        "Exceptional spinach ricotta pie"
+      ],
+      "reference_facts": [
+        {
+          "answer_terms": [
+            "ricotta",
+            "spinach",
+            "garlic"
+          ],
+          "source_terms": [
+            "ricotta, mozzarella, garlic, and spinach",
+            "spinach and ricotta",
+            "garlic-infused olive oil"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "vodka-sauce",
+      "split": "test",
+      "category": "menu",
+      "difficulty": "easy",
+      "question": "How is the vodka-sauce pizza described, and what optional topping is suggested?",
+      "expected_action": "answer",
+      "gold_source_ids": [
+        "review_bfeabf92afa1ff6c1644bee468624ca2"
+      ],
+      "source_labels": [
+        "Incredible vodka sauce base"
+      ],
+      "reference_facts": [
+        {
+          "answer_terms": [
+            "creamy",
+            "spicy",
+            "prosciutto"
+          ],
+          "source_terms": [
+            "creamy, slightly spicy sauce",
+            "Add prosciutto"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "buffalo-chicken",
+      "split": "test",
+      "category": "menu",
+      "difficulty": "easy",
+      "question": "What balance and ingredient quality are praised in the buffalo chicken pizza?",
+      "expected_action": "answer",
+      "gold_source_ids": [
+        "review_2ab5eb185f34f7f6233d315242b13034"
+      ],
+      "source_labels": [
+        "Brilliant buffalo chicken pizza"
+      ],
+      "reference_facts": [
+        {
+          "answer_terms": [
+            "spicy",
+            "creamy",
+            "juicy",
+            "blue cheese"
+          ],
+          "source_terms": [
+            "balances spicy and creamy",
+            "high-quality and juicy",
+            "blue cheese"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "breakfast-pizza",
+      "split": "test",
+      "category": "menu",
+      "difficulty": "easy",
+      "question": "What comes on the breakfast pizza, and when is it offered?",
+      "expected_action": "answer",
+      "gold_source_ids": [
+        "review_413d502bdf96213e0bd1eb04378cd88e"
+      ],
+      "source_labels": [
+        "Outstanding breakfast pizza"
+      ],
+      "reference_facts": [
+        {
+          "answer_terms": [
+            "bacon",
+            "eggs",
+            "hollandaise",
+            "brunch"
+          ],
+          "source_terms": [
+            "bacon, eggs, and hollandaise sauce",
+            "weekend brunch"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "roman-style",
+      "split": "test",
+      "category": "style",
+      "difficulty": "easy",
+      "question": "How does the Roman-style pizza differ from a usual round pie?",
+      "expected_action": "answer",
+      "gold_source_ids": [
+        "review_d9ca96b76c7ab69c0f900f804d4a62f2"
+      ],
+      "source_labels": [
+        "Perfect niche for Roman-style pizza"
+      ],
+      "reference_facts": [
+        {
+          "answer_terms": [
+            "rectangular",
+            "focaccia",
+            "airy"
+          ],
+          "source_terms": [
+            "pizza al taglio",
+            "rectangular",
+            "focaccia-like base",
+            "airy, light crust"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "detroit-style",
+      "split": "test",
+      "category": "style",
+      "difficulty": "easy",
+      "question": "Which structural details are praised in the Detroit-style pizza?",
+      "expected_action": "answer",
+      "gold_source_ids": [
+        "review_dad04092fb528c74b9d80ce442930ee4"
+      ],
+      "source_labels": [
+        "Amazing Detroit-style"
+      ],
+      "reference_facts": [
+        {
+          "answer_terms": [
+            "square",
+            "crispy",
+            "fluffy",
+            "corner"
+          ],
+          "source_terms": [
+            "square pizza",
+            "crispy cheese edges",
+            "fluffy interior",
+            "corner pieces"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "chicago-deep-dish",
+      "split": "test",
+      "category": "style",
+      "difficulty": "easy",
+      "question": "What identifies the praised Chicago-style deep-dish pizza?",
+      "expected_action": "answer",
+      "gold_source_ids": [
+        "review_442067c8d75bbb31443c4aa64f1a1a45"
+      ],
+      "source_labels": [
+        "Excellent Chicago deep dish"
+      ],
+      "reference_facts": [
+        {
+          "answer_terms": [
+            "buttery",
+            "flaky",
+            "cheese",
+            "sauce"
+          ],
+          "source_terms": [
+            "buttery, flaky crust",
+            "cheese under the sauce",
+            "chunky tomato topping"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "new-york-style",
+      "split": "test",
+      "category": "style",
+      "difficulty": "medium",
+      "question": "How do reviewers characterize the New York-style slices?",
+      "expected_action": "answer",
+      "gold_source_ids": [
+        "review_0e5472a8c24c61a7e4de614412461918",
+        "review_0689a695ad22db80c369549a9ae071b2"
+      ],
+      "source_labels": [
+        "Perfect NY-style slices",
+        "Expert-level pizza folding"
+      ],
+      "reference_facts": [
+        {
+          "answer_terms": [
+            "thin",
+            "foldable",
+            "chew"
+          ],
+          "source_terms": [
+            "thin, foldable slices",
+            "fold perfectly New York-style",
+            "balance of crisp and chew"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "delivery-problems",
+      "split": "test",
+      "category": "operations",
+      "difficulty": "hard",
+      "question": "Which delivery and takeout failures appear across the negative reviews?",
+      "expected_action": "answer",
+      "gold_source_ids": [
+        "review_fb4a5b16a84ab35efc47e281e01894ce",
+        "review_50429ddac7fcf92eb87d761a7b7e4d11",
+        "review_c79555a5cf3345966342cfb9207d2405",
+        "review_46deb903486e7bdbf280ccf75a8053b0"
+      ],
+      "source_labels": [
+        "Disappointed with service",
+        "Terrible delivery experience",
+        "Pizza barely survived the drive home",
+        "Pizza arrived upside-down"
+      ],
+      "reference_facts": [
+        {
+          "answer_terms": [
+            "late",
+            "cold",
+            "two hours",
+            "2 hours"
+          ],
+          "source_terms": [
+            "over an hour for delivery",
+            "2 hours to arrive",
+            "cold"
+          ]
+        },
+        {
+          "answer_terms": [
+            "soggy",
+            "upside-down",
+            "upside down"
+          ],
+          "source_terms": [
+            "soggy mess",
+            "completely flipped over"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "long-waits",
+      "split": "test",
+      "category": "operations",
+      "difficulty": "hard",
+      "question": "What long wait or cooking times are explicitly reported?",
+      "expected_action": "answer",
+      "gold_source_ids": [
+        "review_4306c4305c5959dd3587f8e870437a4a",
+        "review_dad04092fb528c74b9d80ce442930ee4",
+        "review_442067c8d75bbb31443c4aa64f1a1a45"
+      ],
+      "source_labels": [
+        "Not worth the wait",
+        "Amazing Detroit-style",
+        "Excellent Chicago deep dish"
+      ],
+      "reference_facts": [
+        {
+          "answer_terms": [
+            "90",
+            "30",
+            "45",
+            "minute"
+          ],
+          "source_terms": [
+            "90-minute wait",
+            "30-minute wait",
+            "45-minute cook time"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "large-groups",
+      "split": "test",
+      "category": "operations",
+      "difficulty": "medium",
+      "question": "What evidence suggests the restaurant can handle large groups or parties?",
+      "expected_action": "answer",
+      "gold_source_ids": [
+        "review_9d84ed9fd7582f0a9f352fcdcc03483e",
+        "review_d8101a592a128df0fb622215f018391c"
+      ],
+      "source_labels": [
+        "Perfect for big groups",
+        "Perfect for large parties"
+      ],
+      "reference_facts": [
+        {
+          "answer_terms": [
+            "12",
+            "20",
+            "group",
+            "party"
+          ],
+          "source_terms": [
+            "party of 12",
+            "group of 20",
+            "shareable pizzas",
+            "party package"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "children-and-families",
+      "split": "test",
+      "category": "operations",
+      "difficulty": "hard",
+      "question": "Which activities or menu options are described for children and families?",
+      "expected_action": "answer",
+      "gold_source_ids": [
+        "review_f20617ff46e7cc6abbc2073fca2f43cd",
+        "review_d57690690aac0645faada4223d374551",
+        "review_42e9a66d38512d7ecd0a86e52f12b2d2"
+      ],
+      "source_labels": [
+        "Family night favorite",
+        "Perfect for kids' parties",
+        "Perfect for picky eaters"
+      ],
+      "reference_facts": [
+        {
+          "answer_terms": [
+            "dough",
+            "mini",
+            "kid",
+            "quadrant"
+          ],
+          "source_terms": [
+            "dough for them to play with",
+            "kid-sized pizzas",
+            "make their own mini pizzas",
+            "divided into quadrants"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "drink-pairings",
+      "split": "test",
+      "category": "beverages",
+      "difficulty": "medium",
+      "question": "What drink-pairing help do reviewers praise?",
+      "expected_action": "answer",
+      "gold_source_ids": [
+        "review_3618241908457302b051385404a70ab0",
+        "review_2f293fad89162c9ceb164d9812bc3d83"
+      ],
+      "source_labels": [
+        "Excellent beer pairing suggestions",
+        "Excellent wine pairings"
+      ],
+      "reference_facts": [
+        {
+          "answer_terms": [
+            "beer",
+            "wine",
+            "pairing"
+          ],
+          "source_terms": [
+            "craft beer selection",
+            "perfect pairing",
+            "curated wine list",
+            "house red"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "price-and-value",
+      "split": "test",
+      "category": "value",
+      "difficulty": "hard",
+      "question": "What specific price or portion complaints make reviewers question the value?",
+      "expected_action": "answer",
+      "gold_source_ids": [
+        "review_49f2ddf7f8434772a008801d3f7dfd95",
+        "review_bb1e3ccbdbad8d3f35e41770cc6e6b61",
+        "review_80b54150ee2f71f582c9798263dd92fe",
+        "review_b9e259e601836dfac086841092fe5c3b"
+      ],
+      "source_labels": [
+        "Overpriced for what you get",
+        "Too expensive for pizza",
+        "Tiny portion sizes",
+        "Absurdly small slices"
+      ],
+      "reference_facts": [
+        {
+          "answer_terms": [
+            "$24",
+            "$30",
+            "$15",
+            "expensive",
+            "overpriced"
+          ],
+          "source_terms": [
+            "$24 for a medium",
+            "$30 for a basic large",
+            "For $15",
+            "portion size"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "undercooked-centers",
+      "split": "test",
+      "category": "quality-defect",
+      "difficulty": "hard",
+      "question": "What signs of an undercooked center are reported?",
+      "expected_action": "answer",
+      "gold_source_ids": [
+        "review_43cc47cc7c997e68800e2faa043b18fc",
+        "review_e8050c6a11acaab43c264cebcdc532a4",
+        "review_28360738a639784c3ea351484aef20d2",
+        "review_1a28353790d8c4bc342444fd14f8be78"
+      ],
+      "source_labels": [
+        "Undercooked in the middle",
+        "Doughy and undercooked",
+        "Cold center burnt edges",
+        "Unmelted cheese in the center"
+      ],
+      "reference_facts": [
+        {
+          "answer_terms": [
+            "doughy",
+            "cold",
+            "unmelted",
+            "sliding"
+          ],
+          "source_terms": [
+            "middle was doughy and undercooked",
+            "toppings were sliding off",
+            "center was barely warm",
+            "cold, unmelted cheese"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "excessive-grease",
+      "split": "test",
+      "category": "quality-defect",
+      "difficulty": "hard",
+      "question": "How severe is the grease problem in the negative reviews?",
+      "expected_action": "answer",
+      "gold_source_ids": [
+        "review_9671a6061820222dd8af1a72592a0a76",
+        "review_182d10267c2e4a1654aae9786af494d5",
+        "review_e58826d3c2728e96a0f7b4f055d4e6b1"
+      ],
+      "source_labels": [
+        "Greasy and disappointing",
+        "Too greasy to enjoy",
+        "Excessive grease pooling"
+      ],
+      "reference_facts": [
+        {
+          "answer_terms": [
+            "swimming",
+            "blot",
+            "pool",
+            "napkin"
+          ],
+          "source_terms": [
+            "swimming in grease",
+            "blot my pizza with napkins",
+            "pools of orange grease"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "negative-sauce-quality",
+      "split": "test",
+      "category": "quality-defect",
+      "difficulty": "hard",
+      "question": "Which different sauce defects are described by dissatisfied reviewers?",
+      "expected_action": "answer",
+      "gold_source_ids": [
+        "review_823c8cf17bd94ada444a824145796489",
+        "review_a92b57aa28366732db18740deb7d39c7",
+        "review_bb161bcd8bbe609cc1be19e232fef089",
+        "review_12574e71aaf0b76482d6fc6a57d34502"
+      ],
+      "source_labels": [
+        "Bland sauce needs work",
+        "Sauce like ketchup",
+        "Sauce had an odd chemical taste",
+        "Tomato sauce tasted rancid"
+      ],
+      "reference_facts": [
+        {
+          "answer_terms": [
+            "bland",
+            "ketchup",
+            "chemical",
+            "rancid"
+          ],
+          "source_terms": [
+            "lacked any personality",
+            "reminiscent of ketchup",
+            "artificial flavor",
+            "rancid notes"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fresh-ingredients",
+      "split": "test",
+      "category": "ingredients",
+      "difficulty": "hard",
+      "question": "What evidence do positive reviews give for fresh or premium ingredients?",
+      "expected_action": "answer",
+      "gold_source_ids": [
+        "review_e0cf78dbbb255982fbfb1288297e52ea",
+        "review_dc2ae1a58c8bbd89048c1c0b569af1af",
+        "review_924b8212f2c0052946059cb4c867d038"
+      ],
+      "source_labels": [
+        "Fresh ingredients make the difference",
+        "Superior ingredients make the difference",
+        "Exceptional sauce-making technique"
+      ],
+      "reference_facts": [
+        {
+          "answer_terms": [
+            "fresh",
+            "Italy",
+            "San Marzano",
+            "house",
+            "hand-crushed"
+          ],
+          "source_terms": [
+            "fresh tomatoes",
+            "import their flour from Italy",
+            "San Marzano tomatoes",
+            "mozzarella in-house",
+            "hand-crushed tomatoes"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "seasonal-specials",
+      "split": "test",
+      "category": "ingredients",
+      "difficulty": "medium",
+      "question": "Which seasonal ingredients appear in the spring pizza specials?",
+      "expected_action": "answer",
+      "gold_source_ids": [
+        "review_5666239ad9f3340465ef839c7b49fb11",
+        "review_4a9fb2adb5ce77a1c6cbddd7bb4be043"
+      ],
+      "source_labels": [
+        "Creative seasonal specials",
+        "Brilliant seasonal rotation"
+      ],
+      "reference_facts": [
+        {
+          "answer_terms": [
+            "asparagus",
+            "ricotta",
+            "prosciutto",
+            "peas",
+            "garlic"
+          ],
+          "source_terms": [
+            "asparagus, lemon ricotta, and prosciutto",
+            "asparagus, green garlic, and fresh peas"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "parking-abstention",
+      "split": "test",
+      "category": "abstention",
+      "difficulty": "medium",
+      "question": "Is customer parking available at the restaurant?",
+      "expected_action": "abstain",
+      "gold_source_ids": [],
+      "source_labels": [],
+      "reference_facts": []
+    },
+    {
+      "id": "wheelchair-abstention",
+      "split": "test",
+      "category": "abstention",
+      "difficulty": "medium",
+      "question": "Is the entrance and dining room wheelchair accessible?",
+      "expected_action": "abstain",
+      "gold_source_ids": [],
+      "source_labels": [],
+      "reference_facts": []
+    },
+    {
+      "id": "reservations-abstention",
+      "split": "test",
+      "category": "abstention",
+      "difficulty": "medium",
+      "question": "Does the restaurant accept reservations through its website?",
+      "expected_action": "abstain",
+      "gold_source_ids": [],
+      "source_labels": [],
+      "reference_facts": []
+    },
+    {
+      "id": "wifi-abstention",
+      "split": "test",
+      "category": "abstention",
+      "difficulty": "medium",
+      "question": "Does the restaurant provide free Wi-Fi to customers?",
+      "expected_action": "abstain",
+      "gold_source_ids": [],
+      "source_labels": [],
+      "reference_facts": []
+    },
+    {
+      "id": "delivery-fee-abstention",
+      "split": "test",
+      "category": "abstention",
+      "difficulty": "medium",
+      "question": "How much does the restaurant charge as a delivery fee?",
+      "expected_action": "abstain",
+      "gold_source_ids": [],
+      "source_labels": [],
+      "reference_facts": []
+    }
+  ]
+}

@@ -1,21 +1,33 @@
 import argparse
+import hashlib
 import json
+import platform
+import subprocess
 import sys
 from collections.abc import Sequence
 from datetime import date
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
+from urllib.parse import urlsplit, urlunsplit
 
 from agent import answer_question, create_chat_model
 from evaluation import (
     DEFAULT_EVALUATION_PATH,
+    build_evaluation_report,
     load_evaluation_cases,
+    retrieval_metrics_from_observations,
+    run_bm25_baseline,
     run_rag_evaluation,
+    write_evaluation_report,
 )
+from local_ai_agent import __version__
 from ollama_health import (
     DEFAULT_CHAT_MODEL,
     DEFAULT_EMBEDDING_MODEL,
     DEFAULT_OLLAMA_HOST,
     check_ollama,
+    model_metadata,
+    ollama_version,
 )
 from vector import (
     DEFAULT_DATA_PATH,
@@ -78,6 +90,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     evaluate_parser.add_argument("--cases", type=Path, default=DEFAULT_EVALUATION_PATH)
     evaluate_parser.add_argument("--limit", type=int, default=5)
+    evaluate_parser.add_argument(
+        "--report-dir",
+        type=Path,
+        help="write evaluation-report.json and README.md to this directory",
+    )
     _add_runtime_arguments(evaluate_parser)
 
     chat_parser = subparsers.add_parser("chat", help="Start the interactive terminal")
@@ -118,6 +135,62 @@ def _print_answer(result) -> None:
                 details.append(f"{metadata[key]}{suffix}")
         print(f"[{source.citation_number}] " + " · ".join(details))
         print(source.document.page_content.replace("\n", " | "))
+
+
+def _safe_endpoint(value: str) -> str:
+    """Return an endpoint suitable for a committed report without credentials."""
+    parsed = urlsplit(value)
+    if not parsed.scheme or not parsed.hostname:
+        return value.split("?", 1)[0].split("#", 1)[0]
+    hostname = parsed.hostname
+    if ":" in hostname and not hostname.startswith("["):
+        hostname = f"[{hostname}]"
+    netloc = hostname
+    if parsed.port is not None:
+        netloc = f"{netloc}:{parsed.port}"
+    return urlunsplit((parsed.scheme, netloc, parsed.path, "", ""))
+
+
+def _file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _git_provenance() -> dict[str, str | bool | None]:
+    root = Path(__file__).resolve().parent
+    try:
+        commit = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=root,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        dirty = bool(
+            subprocess.run(
+                ["git", "status", "--porcelain"],
+                cwd=root,
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return {"git_commit": None, "git_dirty": None}
+    return {"git_commit": commit, "git_dirty": dirty}
+
+
+def _dependency_versions() -> dict[str, str]:
+    resolved: dict[str, str] = {}
+    for package in ("chromadb", "langchain-ollama", "pandas"):
+        try:
+            resolved[package] = version(package)
+        except PackageNotFoundError:
+            resolved[package] = "not-installed"
+    return resolved
 
 
 def _create_runtime(arguments: argparse.Namespace):
@@ -168,11 +241,24 @@ def run(arguments: argparse.Namespace) -> int:
 
     if arguments.command == "evaluate":
         vector_store, model = _create_runtime(arguments)
-        cases = load_evaluation_cases(arguments.cases)
+        cases = load_evaluation_cases(
+            arguments.cases,
+            dataset_path=arguments.data,
+        )
         metrics, observations = run_rag_evaluation(
             cases,
             vector_store=vector_store,
             model=model,
+            limit=arguments.limit,
+        )
+        semantic_metrics = retrieval_metrics_from_observations(
+            cases,
+            observations,
+            limit=arguments.limit,
+        )
+        baseline_metrics, baseline_observations = run_bm25_baseline(
+            cases,
+            vector_store=vector_store,
             limit=arguments.limit,
         )
         print(json.dumps(metrics.as_dict(), indent=2, sort_keys=True))
@@ -182,6 +268,47 @@ def run(arguments: argparse.Namespace) -> int:
                 f"cited={len(observation.cited_source_ids)} "
                 f"abstained={observation.abstained}"
             )
+        if arguments.report_dir is not None:
+            report = build_evaluation_report(
+                cases=cases,
+                rag_metrics=metrics,
+                semantic_metrics=semantic_metrics,
+                baseline_metrics=baseline_metrics,
+                observations=observations,
+                baseline_observations=baseline_observations,
+                configuration={
+                    "chat_model": arguments.chat_model,
+                    "embedding_model": arguments.embedding_model,
+                    "ollama_version": ollama_version(arguments.ollama_host),
+                    "ollama_host": _safe_endpoint(arguments.ollama_host),
+                    "evidence_limit": arguments.limit,
+                    "models": model_metadata(
+                        (arguments.chat_model, arguments.embedding_model),
+                        host=arguments.ollama_host,
+                    ),
+                },
+                provenance={
+                    "application_version": __version__,
+                    "python_version": platform.python_version(),
+                    "platform": platform.platform(),
+                    "dataset_file": arguments.data.name,
+                    "dataset_sha256": _file_sha256(arguments.data),
+                    "review_count": len(dataframe),
+                    "cases_file": arguments.cases.name,
+                    "cases_sha256": _file_sha256(arguments.cases),
+                    "dependency_versions": _dependency_versions(),
+                    **_git_provenance(),
+                },
+            )
+            json_path = arguments.report_dir / "evaluation-report.json"
+            markdown_path = arguments.report_dir / "README.md"
+            write_evaluation_report(
+                report,
+                json_path=json_path,
+                markdown_path=markdown_path,
+            )
+            print(f"Wrote {json_path}")
+            print(f"Wrote {markdown_path}")
         return 0
 
     if arguments.command == "ask":
@@ -211,7 +338,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     arguments = parser.parse_args(supplied_arguments)
     try:
         return run(arguments)
-    except (ReviewDataError, ValueError) as error:
+    except (ReviewDataError, TypeError, ValueError) as error:
         parser.error(str(error))
     return 2
 

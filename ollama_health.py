@@ -2,6 +2,7 @@ import os
 from dataclasses import dataclass
 from typing import Any
 
+import httpx
 from httpx import HTTPError
 from ollama import Client, ResponseError
 
@@ -37,6 +38,21 @@ def create_ollama_client(host: str = DEFAULT_OLLAMA_HOST) -> Client:
     return Client(host=host)
 
 
+def ollama_version(
+    host: str = DEFAULT_OLLAMA_HOST,
+    *,
+    request: Any | None = None,
+) -> str:
+    """Return the server-reported Ollama runtime version."""
+    getter = request or httpx.get
+    response = getter(f"{host.rstrip('/')}/api/version", timeout=5.0)
+    response.raise_for_status()
+    payload = response.json()
+    if not isinstance(payload, dict) or not str(payload.get("version") or "").strip():
+        raise ValueError("Ollama version response is missing a version")
+    return str(payload["version"])
+
+
 def _available_model_names(response: Any) -> tuple[str, ...]:
     models = (
         response.get("models", []) if isinstance(response, dict) else response.models
@@ -58,6 +74,56 @@ def _model_is_available(required: str, available: tuple[str, ...]) -> bool:
     return any(
         name == required or name.startswith(f"{required}:") for name in available
     )
+
+
+def _model_value(model: Any, key: str) -> Any:
+    if isinstance(model, dict):
+        return model.get(key)
+    return getattr(model, key, None)
+
+
+def model_metadata(
+    required_models: tuple[str, ...],
+    *,
+    host: str = DEFAULT_OLLAMA_HOST,
+    client: Any | None = None,
+) -> dict[str, dict[str, str | int | None]]:
+    """Resolve configured model tags to the immutable digests Ollama reports."""
+    ollama_client = client or create_ollama_client(host)
+    response = ollama_client.list()
+    models = (
+        response.get("models", []) if isinstance(response, dict) else response.models
+    )
+    resolved: dict[str, dict[str, str | int | None]] = {}
+    for required in required_models:
+        candidates = []
+        for model in models:
+            name = _model_value(model, "model") or _model_value(model, "name")
+            if name and _model_is_available(required, (str(name),)):
+                candidates.append(model)
+        if not candidates:
+            continue
+        selected = min(
+            candidates,
+            key=lambda model: (
+                str(_model_value(model, "model") or _model_value(model, "name"))
+                != required,
+                not str(
+                    _model_value(model, "model") or _model_value(model, "name")
+                ).endswith(":latest"),
+                str(_model_value(model, "model") or _model_value(model, "name")),
+            ),
+        )
+        size = _model_value(selected, "size")
+        resolved[required] = {
+            "resolved_name": str(
+                _model_value(selected, "model") or _model_value(selected, "name")
+            ),
+            "digest": str(_model_value(selected, "digest") or "") or None,
+            "size": int(size) if size is not None else None,
+            "modified_at": str(_model_value(selected, "modified_at") or "") or None,
+        }
+    return resolved
 
 
 def check_ollama(

@@ -1,0 +1,43 @@
+{
+  "abstention_case_count": 5,
+  "abstention_recall": 1.0,
+  "answer_success_rate": 0.56,
+  "answerable_case_count": 25,
+  "case_count": 30,
+  "citation_validity": 0.56,
+  "expected_action_accuracy": 0.6333333333333333,
+  "reference_term_support_proxy": 0.52,
+  "retrieval_recall": 0.9133333333333333
+}
+crispy-crust: retrieved=5 cited=4 abstained=False
+vegan-cheese: retrieved=5 cited=4 abstained=False
+dessert-pizza: retrieved=5 cited=1 abstained=False
+gluten-free-crust: retrieved=5 cited=0 abstained=False
+margherita-components: retrieved=5 cited=4 abstained=False
+hawaiian-pizza: retrieved=5 cited=0 abstained=True
+white-pizza: retrieved=5 cited=0 abstained=True
+vodka-sauce: retrieved=5 cited=3 abstained=False
+buffalo-chicken: retrieved=5 cited=5 abstained=False
+breakfast-pizza: retrieved=5 cited=0 abstained=True
+roman-style: retrieved=5 cited=5 abstained=False
+detroit-style: retrieved=5 cited=2 abstained=False
+chicago-deep-dish: retrieved=5 cited=0 abstained=True
+new-york-style: retrieved=5 cited=4 abstained=False
+delivery-problems: retrieved=5 cited=0 abstained=False
+long-waits: retrieved=5 cited=0 abstained=True
+large-groups: retrieved=5 cited=4 abstained=False
+children-and-families: retrieved=5 cited=0 abstained=True
+drink-pairings: retrieved=5 cited=0 abstained=False
+price-and-value: retrieved=5 cited=3 abstained=False
+undercooked-centers: retrieved=5 cited=5 abstained=False
+excessive-grease: retrieved=5 cited=0 abstained=True
+negative-sauce-quality: retrieved=5 cited=5 abstained=False
+fresh-ingredients: retrieved=5 cited=5 abstained=False
+seasonal-specials: retrieved=5 cited=0 abstained=True
+parking-abstention: retrieved=5 cited=0 abstained=True
+wheelchair-abstention: retrieved=5 cited=0 abstained=True
+reservations-abstention: retrieved=5 cited=0 abstained=True
+wifi-abstention: retrieved=5 cited=0 abstained=True
+delivery-fee-abstention: retrieved=5 cited=0 abstained=True
+Wrote evaluation/results/v0.2.0-ollama-0.32.5-isolated/evaluation-report.json
+Wrote evaluation/results/v0.2.0-ollama-0.32.5-isolated/README.md

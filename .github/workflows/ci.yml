@@ -30,8 +30,14 @@ jobs:
       - name: Install locked dependencies
         run: uv sync --frozen
 
-      - name: Run tests
-        run: uv run python -m unittest discover -s tests -v
+      - name: Run tests with coverage
+        run: |
+          uv run --with coverage==7.13.4 coverage run -m unittest discover -s tests -v
+          uv run --with coverage==7.13.4 coverage report
+
+      - name: Static type check
+        if: matrix.python-version == '3.11'
+        run: uv run --with mypy==1.18.2 mypy
 
       - name: Run Ruff
         if: matrix.python-version == '3.11'
@@ -39,8 +45,33 @@ jobs:
           uvx --from ruff==0.16.1 ruff check .
           uvx --from ruff==0.16.1 ruff format --check .
 
+      - name: Audit runtime dependencies
+        if: matrix.python-version == '3.11'
+        run: |
+          uv export --frozen --no-dev --format requirements-txt \
+            --no-emit-project -o /tmp/runtime-requirements.txt
+          uvx --from pip-audit==2.10.1 pip-audit \
+            -r /tmp/runtime-requirements.txt \
+            --progress-spinner off \
+            --ignore-vuln CVE-2026-45829
+
       - name: Build and smoke-test package
         if: matrix.python-version == '3.11'
         run: |
           uv build
+          python - <<'PY'
+          import glob
+          import zipfile
+
+          wheel, = glob.glob("dist/local_ai_agent-*.whl")
+          with zipfile.ZipFile(wheel) as archive:
+              names = set(archive.namelist())
+          required = {
+              "local_ai_agent/data/rag_cases.json",
+              "local_ai_agent/data/realistic_restaurant_reviews.csv",
+          }
+          missing = required - names
+          if missing:
+              raise SystemExit(f"wheel is missing packaged assets: {sorted(missing)}")
+          PY
           uvx --from dist/local_ai_agent-*.whl local-ai-agent --help

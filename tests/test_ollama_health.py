@@ -1,6 +1,6 @@
 import unittest
 
-from ollama_health import check_ollama
+from ollama_health import check_ollama, model_metadata, ollama_version
 
 
 class FakeClient:
@@ -17,6 +17,51 @@ class FakeClient:
 
 
 class OllamaHealthTest(unittest.TestCase):
+    def test_reports_server_version(self) -> None:
+        class Response:
+            def raise_for_status(self) -> None:
+                return None
+
+            def json(self) -> dict[str, str]:
+                return {"version": "0.32.5"}
+
+        def request(url: str, *, timeout: float):
+            self.assertEqual(url, "http://localhost:11434/api/version")
+            self.assertEqual(timeout, 5.0)
+            return Response()
+
+        self.assertEqual(
+            ollama_version("http://localhost:11434/", request=request),
+            "0.32.5",
+        )
+
+    def test_model_metadata_resolves_tags_and_preserves_digests(self) -> None:
+        class MetadataClient:
+            def list(self):
+                return {
+                    "models": [
+                        {
+                            "model": "llama3.2:latest",
+                            "digest": "sha256:chat",
+                            "size": 123,
+                        },
+                        {
+                            "model": "mxbai-embed-large:latest",
+                            "digest": "sha256:embed",
+                            "size": 456,
+                        },
+                    ]
+                }
+
+        metadata = model_metadata(
+            ("llama3.2", "mxbai-embed-large"),
+            client=MetadataClient(),
+        )
+
+        self.assertEqual(metadata["llama3.2"]["resolved_name"], "llama3.2:latest")
+        self.assertEqual(metadata["llama3.2"]["digest"], "sha256:chat")
+        self.assertEqual(metadata["mxbai-embed-large"]["size"], 456)
+
     def test_reports_available_models(self) -> None:
         health = check_ollama(
             required_models=("llama3.2", "mxbai-embed-large"),
