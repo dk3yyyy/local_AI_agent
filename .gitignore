@@ -9,5 +9,6 @@ wheels/
 # Virtual environments
 .venv
 
-# Database files
+# Database and uploaded data files
 chrome_langchain_db/
+.local_data/

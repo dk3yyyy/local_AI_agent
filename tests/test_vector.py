@@ -1,169 +1,225 @@
 import os
-import runpy
 import tempfile
 import unittest
+from datetime import date
 from pathlib import Path
-from typing import ClassVar
-from unittest.mock import patch
 
 import pandas as pd
-from langchain_chroma import Chroma as RealChroma
+from langchain_core.documents import Document
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-VECTOR_MODULE = PROJECT_ROOT / "vector.py"
+from vector import (
+    DEFAULT_DATA_PATH,
+    ReviewDataError,
+    create_vector_store,
+    dataset_summary,
+    index_count,
+    load_reviews,
+    search_reviews,
+)
 
 
-class FakeEmbeddings:
-    document_batches: ClassVar[list[list[str]]] = []
-
-    def __init__(self, *, model: str) -> None:
-        self.model = model
+class DeterministicEmbeddings:
+    def __init__(self) -> None:
+        self.document_batches: list[list[str]] = []
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
-        self.document_batches.append(texts)
-        return [[float(index), 0.0, 1.0] for index, _ in enumerate(texts)]
+        self.document_batches.append(list(texts))
+        return [self._vector(text) for text in texts]
 
     def embed_query(self, text: str) -> list[float]:
-        return [0.0, 0.0, 1.0]
+        return self._vector(text)
+
+    @staticmethod
+    def _vector(text: str) -> list[float]:
+        total = sum(text.encode("utf-8"))
+        return [float((total + offset) % 17) for offset in range(8)]
 
 
-class FailingEmbeddings(FakeEmbeddings):
+class FailingEmbeddings(DeterministicEmbeddings):
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
-        raise RuntimeError("embedding failed")
+        raise RuntimeError("simulated embedding failure")
 
 
-class FakeChroma:
-    existing_ids: ClassVar[list[str]] = []
-    add_calls: ClassVar[list[dict[str, object]]] = []
+class FakeVectorStore:
+    def __init__(self, results: list[tuple[Document, float]]) -> None:
+        self.results = results
+        self.requested_k: int | None = None
 
-    def __init__(
-        self,
-        *,
-        collection_name: str,
-        persist_directory: str,
-        embedding_function: FakeEmbeddings,
-    ) -> None:
-        self.collection_name = collection_name
-        self.persist_directory = persist_directory
-        self.embedding_function = embedding_function
+    def get(self, *, include: list[str]) -> dict[str, list[str]]:
+        return {"ids": [str(index) for index in range(len(self.results))]}
 
-    def get(self, *, ids: list[str], include: list[str]) -> dict[str, list[str]]:
-        return {"ids": [item_id for item_id in ids if item_id in self.existing_ids]}
-
-    def add_documents(self, *, documents: list[object], ids: list[str]) -> None:
-        self.add_calls.append({"documents": documents, "ids": ids})
-
-    def as_retriever(self, *, search_kwargs: dict[str, int]) -> dict[str, object]:
-        return {"store": self, "search_kwargs": search_kwargs}
+    def similarity_search_with_score(
+        self, query: str, *, k: int
+    ) -> list[tuple[Document, float]]:
+        self.requested_k = k
+        return self.results[:k]
 
 
-class VectorStoreInitializationTest(unittest.TestCase):
-    def setUp(self) -> None:
-        FakeEmbeddings.document_batches = []
-        FakeChroma.existing_ids = []
-        FakeChroma.add_calls = []
-        self.dataframe = pd.DataFrame(
-            [
-                {
-                    "Title": "Great crust",
-                    "Date": "2026-01-01",
-                    "Rating": 5,
-                    "Review": "Crisp and flavorful.",
-                },
-                {
-                    "Title": "Slow service",
-                    "Date": "2026-01-02",
-                    "Rating": 2,
-                    "Review": "The food arrived cold.",
-                },
-            ]
-        )
-
-    def run_vector_module(self, working_directory: Path) -> None:
+class ReviewDataTest(unittest.TestCase):
+    def test_default_dataset_path_is_independent_of_working_directory(self) -> None:
         previous_directory = Path.cwd()
-        os.chdir(working_directory)
-        try:
-            with (
-                patch("pandas.read_csv", return_value=self.dataframe) as read_csv,
-                patch("langchain_ollama.OllamaEmbeddings", FakeEmbeddings),
-                patch("langchain_chroma.Chroma", FakeChroma),
-            ):
-                runpy.run_path(str(VECTOR_MODULE), run_name="vector_under_test")
-                self.read_csv_argument = read_csv.call_args.args[0]
-        finally:
-            os.chdir(previous_directory)
-
-    def test_empty_existing_database_is_populated(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
-            working_directory = Path(temporary_directory)
-            (working_directory / "chrome_langchain_db").mkdir()
-
-            self.run_vector_module(working_directory)
-
-        self.assertEqual(len(FakeChroma.add_calls), 1)
-        self.assertEqual(FakeChroma.add_calls[0]["ids"], ["0", "1"])
-
-    def test_only_missing_documents_are_added(self) -> None:
-        FakeChroma.existing_ids = ["0"]
-
-        with tempfile.TemporaryDirectory() as temporary_directory:
-            working_directory = Path(temporary_directory)
-            (working_directory / "chrome_langchain_db").mkdir()
-
-            self.run_vector_module(working_directory)
-
-        self.assertEqual(len(FakeChroma.add_calls), 1)
-        self.assertEqual(FakeChroma.add_calls[0]["ids"], ["1"])
-
-    def test_recovers_after_real_chroma_initialization_failure(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary_directory:
-            working_directory = Path(temporary_directory)
-            database_directory = working_directory / "chrome_langchain_db"
-            stores: list[RealChroma] = []
-
-            def create_chroma(**kwargs: object) -> RealChroma:
-                kwargs["persist_directory"] = str(database_directory)
-                store = RealChroma(**kwargs)
-                stores.append(store)
-                return store
-
-            previous_directory = Path.cwd()
-            os.chdir(working_directory)
             try:
-                with (
-                    patch("pandas.read_csv", return_value=self.dataframe),
-                    patch("langchain_ollama.OllamaEmbeddings", FailingEmbeddings),
-                    patch("langchain_chroma.Chroma", side_effect=create_chroma),
-                    self.assertRaisesRegex(RuntimeError, "embedding failed"),
-                ):
-                    runpy.run_path(
-                        str(VECTOR_MODULE), run_name="first_failed_initialization"
-                    )
-
-                self.assertTrue(database_directory.exists())
-
-                with (
-                    patch("pandas.read_csv", return_value=self.dataframe),
-                    patch("langchain_ollama.OllamaEmbeddings", FakeEmbeddings),
-                    patch("langchain_chroma.Chroma", side_effect=create_chroma),
-                ):
-                    runpy.run_path(
-                        str(VECTOR_MODULE), run_name="recovered_initialization"
-                    )
+                os.chdir(temporary_directory)
+                dataframe = load_reviews()
             finally:
                 os.chdir(previous_directory)
 
-            self.assertEqual(stores[-1]._collection.count(), 2)
-            self.assertEqual(len(FakeEmbeddings.document_batches), 1)
-
-    def test_dataset_path_is_independent_of_working_directory(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary_directory:
-            self.run_vector_module(Path(temporary_directory))
-
+        self.assertEqual(len(dataframe), 123)
         self.assertEqual(
-            Path(self.read_csv_argument),
-            PROJECT_ROOT / "realistic_restaurant_reviews.csv",
+            DEFAULT_DATA_PATH,
+            Path(__file__).resolve().parents[1] / "realistic_restaurant_reviews.csv",
         )
+
+    def test_rejects_missing_columns(self) -> None:
+        dataframe = pd.DataFrame({"Title": ["Only a title"]})
+
+        with self.assertRaisesRegex(ReviewDataError, "missing required columns"):
+            load_reviews(dataframe)
+
+    def test_rejects_invalid_rating_and_date(self) -> None:
+        dataframe = pd.DataFrame(
+            {
+                "Title": ["Bad row"],
+                "Date": ["not-a-date"],
+                "Rating": [7],
+                "Review": ["Invalid values"],
+            }
+        )
+
+        with self.assertRaisesRegex(ReviewDataError, "Rating"):
+            load_reviews(dataframe)
+
+    def test_dataset_summary_is_deterministic(self) -> None:
+        dataframe = load_reviews(
+            pd.DataFrame(
+                {
+                    "Title": ["A", "B", "C"],
+                    "Date": ["2024-01-01", "2024-02-01", "2024-03-01"],
+                    "Rating": [1, 4, 5],
+                    "Review": ["Bad", "Good", "Great"],
+                }
+            )
+        )
+
+        summary = dataset_summary(dataframe)
+
+        self.assertEqual(summary.total_reviews, 3)
+        self.assertAlmostEqual(summary.average_rating, 10 / 3)
+        self.assertEqual(summary.high_rated, 2)
+        self.assertEqual(summary.low_rated, 1)
+        self.assertEqual(summary.rating_counts, {1: 1, 2: 0, 3: 0, 4: 1, 5: 1})
+
+
+class VectorStoreTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.dataframe = pd.DataFrame(
+            {
+                "Title": ["Great crust", "Slow service"],
+                "Date": ["2024-01-10", "2024-02-20"],
+                "Rating": [5, 2],
+                "Review": ["Crisp and flavorful.", "Our order arrived late."],
+            }
+        )
+
+    def test_recovers_after_failed_real_chroma_initialization(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            database_path = Path(temporary_directory) / "chroma"
+
+            with self.assertRaisesRegex(RuntimeError, "simulated embedding failure"):
+                create_vector_store(
+                    self.dataframe,
+                    database_path=database_path,
+                    collection_name="recovery_test",
+                    embeddings=FailingEmbeddings(),
+                )
+
+            self.assertTrue(database_path.exists())
+
+            embeddings = DeterministicEmbeddings()
+            store = create_vector_store(
+                self.dataframe,
+                database_path=database_path,
+                collection_name="recovery_test",
+                embeddings=embeddings,
+            )
+            self.assertEqual(index_count(store), 2)
+            self.assertEqual(len(embeddings.document_batches), 1)
+
+            second_embeddings = DeterministicEmbeddings()
+            second_store = create_vector_store(
+                self.dataframe,
+                database_path=database_path,
+                collection_name="recovery_test",
+                embeddings=second_embeddings,
+            )
+            self.assertEqual(index_count(second_store), 2)
+            self.assertEqual(second_embeddings.document_batches, [])
+
+    def test_adds_only_rows_missing_from_partial_collection(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            database_path = Path(temporary_directory) / "chroma"
+            first_embeddings = DeterministicEmbeddings()
+            create_vector_store(
+                self.dataframe.iloc[:1],
+                database_path=database_path,
+                collection_name="partial_test",
+                embeddings=first_embeddings,
+            )
+
+            second_embeddings = DeterministicEmbeddings()
+            store = create_vector_store(
+                self.dataframe,
+                database_path=database_path,
+                collection_name="partial_test",
+                embeddings=second_embeddings,
+            )
+
+            self.assertEqual(index_count(store), 2)
+            self.assertEqual(len(second_embeddings.document_batches), 1)
+            self.assertEqual(len(second_embeddings.document_batches[0]), 1)
+
+    def test_filters_semantic_results_by_rating_and_date(self) -> None:
+        results = [
+            (
+                Document(
+                    page_content="Excellent pizza",
+                    metadata={"rating": 5, "date": "2024-03-10"},
+                    id="a",
+                ),
+                0.1,
+            ),
+            (
+                Document(
+                    page_content="Old positive review",
+                    metadata={"rating": 4, "date": "2024-01-01"},
+                    id="b",
+                ),
+                0.2,
+            ),
+            (
+                Document(
+                    page_content="Recent complaint",
+                    metadata={"rating": 2, "date": "2024-03-15"},
+                    id="c",
+                ),
+                0.3,
+            ),
+        ]
+        store = FakeVectorStore(results)
+
+        matches = search_reviews(
+            store,
+            "pizza",
+            limit=5,
+            min_rating=4,
+            max_rating=5,
+            start_date=date(2024, 2, 1),
+            end_date=date(2024, 3, 31),
+        )
+
+        self.assertEqual([match.document.id for match in matches], ["a"])
+        self.assertEqual(store.requested_k, 3)
 
 
 if __name__ == "__main__":
