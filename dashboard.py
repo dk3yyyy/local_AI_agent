@@ -387,9 +387,10 @@ filtered = filter_reviews(
 metric_columns = st.columns(4)
 metric_columns[0].metric("Reviews in view", f"{len(filtered):,}")
 if has_rating:
+    average_rating = filtered["Rating"].mean()
     metric_columns[1].metric(
         "Average rating",
-        f"{filtered['Rating'].mean():.2f}" if len(filtered) else "No data",
+        f"{average_rating:.2f}" if pd.notna(average_rating) else "No data",
     )
     metric_columns[2].metric("Positive", int((filtered["Rating"] >= 4).sum()))
     metric_columns[3].metric("Low-rated", int((filtered["Rating"] <= 2).sum()))

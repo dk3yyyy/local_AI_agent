@@ -114,15 +114,10 @@ def _normalize_column_name(value: object) -> str:
 
 def _alias_score(column: str, aliases: tuple[str, ...]) -> int:
     normalized = _normalize_column_name(column)
-    scores = []
-    for alias in aliases:
-        if normalized == alias:
-            scores.append(1000 + len(alias))
-        elif normalized.startswith(alias) or normalized.endswith(alias):
-            scores.append(500 + len(alias))
-        elif alias in normalized:
-            scores.append(100 + len(alias))
-    return max(scores, default=0)
+    return max(
+        (1000 + len(alias) for alias in aliases if normalized == alias),
+        default=0,
+    )
 
 
 def suggest_column_mapping(columns: Any) -> dict[str, str | None]:
@@ -140,8 +135,8 @@ def suggest_column_mapping(columns: Any) -> dict[str, str | None]:
             reverse=True,
         )
         score, _, column = ranked[0] if ranked else (0, 0, None)
-        suggestions[role] = column if score else None
-        if score and column is not None:
+        suggestions[role] = column if score >= 500 else None
+        if score >= 500 and column is not None:
             claimed.add(column)
     return suggestions
 
@@ -334,12 +329,12 @@ def filter_reviews(
         if max_rating is not None:
             mask &= ratings <= max_rating
     if start_date is not None or end_date is not None:
-        dates = pd.to_datetime(normalized["Date"], errors="coerce").dt.date
+        dates = pd.to_datetime(normalized["Date"], errors="coerce")
         mask &= dates.notna()
         if start_date is not None:
-            mask &= dates >= start_date
+            mask &= dates >= pd.Timestamp(start_date)
         if end_date is not None:
-            mask &= dates <= end_date
+            mask &= dates <= pd.Timestamp(end_date)
 
     for canonical, selected in (
         ("Sentiment", sentiments),
@@ -384,10 +379,16 @@ def _documents_and_ids(dataframe: pd.DataFrame) -> tuple[list[Document], list[st
                 if canonical in {"Title", "Sentiment", "Restaurant", "Country"}:
                     content_lines.append(f"{canonical}: {value}")
         for source_column, raw_value in row["_extra"].items():
-            safe_key = f"extra_{_normalize_column_name(source_column)}"
-            if safe_key != "extra_" and safe_key not in metadata:
-                metadata[safe_key] = str(raw_value)
-                content_lines.append(f"{source_column}: {raw_value}")
+            base_key = f"extra_{_normalize_column_name(source_column)}"
+            if base_key == "extra_":
+                continue
+            safe_key = base_key
+            suffix = 2
+            while safe_key in metadata:
+                safe_key = f"{base_key}_{suffix}"
+                suffix += 1
+            metadata[safe_key] = str(raw_value)
+            content_lines.append(f"{source_column}: {raw_value}")
         content_lines.append(f"Review: {row['Review']}")
         documents.append(
             Document(

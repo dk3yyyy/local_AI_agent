@@ -186,7 +186,7 @@ class AdaptiveSchemaTest(unittest.TestCase):
                 collection_name="adaptive_schema",
                 embeddings=DeterministicEmbeddings(),
             )
-            result = store.get(include=["metadatas", "documents"])
+            result = store.get(ids=["0"], include=["metadatas", "documents"])
 
         metadata = result["metadatas"][0]
         self.assertEqual(metadata["sentiment"], "Positive")
@@ -216,6 +216,51 @@ class AdaptiveSchemaTest(unittest.TestCase):
         self.assertNotEqual(first.database_path, second.database_path)
         self.assertEqual(first.mapping, review_first)
         self.assertEqual(second.mapping, review_second)
+
+    def test_weak_alias_substrings_remain_unmapped(self) -> None:
+        suggestions = suggest_column_mapping(["Review", "Label ID", "Region Code"])
+
+        self.assertEqual(suggestions["review"], "Review")
+        self.assertIsNone(suggestions["sentiment"])
+        self.assertIsNone(suggestions["country"])
+
+    def test_date_filter_excludes_undated_rows(self) -> None:
+        reviews = load_reviews(
+            pd.DataFrame(
+                {
+                    "Review": ["Dated", "Undated"],
+                    "Review Date": ["2026-01-01", None],
+                }
+            )
+        )
+
+        filtered = filter_reviews(
+            reviews,
+            start_date=date(2025, 12, 31),
+            end_date=date(2026, 1, 2),
+        )
+
+        self.assertEqual(filtered["Review"].tolist(), ["Dated"])
+
+    def test_extra_column_name_collisions_preserve_both_values(self) -> None:
+        dataframe = pd.DataFrame(
+            [["Good meal", "first", "second"]],
+            columns=["Review", "Order ID", "order_id"],
+        )
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            store = create_vector_store(
+                dataframe,
+                database_path=Path(temporary_directory) / "chroma",
+                collection_name="extra_collision",
+                embeddings=DeterministicEmbeddings(),
+            )
+            result = store.get(ids=["0"], include=["metadatas", "documents"])
+
+        metadata = result["metadatas"][0]
+        self.assertEqual(metadata["extra_orderid"], "first")
+        self.assertEqual(metadata["extra_orderid_2"], "second")
+        self.assertIn("Order ID: first", result["documents"][0])
+        self.assertIn("order_id: second", result["documents"][0])
 
 
 if __name__ == "__main__":

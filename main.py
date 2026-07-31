@@ -95,11 +95,11 @@ def _print_answer(result) -> None:
     print("Sources")
     for source in result.sources:
         metadata = source.document.metadata
-        details = [
-            str(metadata[key])
-            for key in ("restaurant", "country", "sentiment", "rating", "date")
-            if key in metadata
-        ]
+        details = []
+        for key in ("restaurant", "country", "sentiment", "rating", "date"):
+            if key in metadata:
+                suffix = "/5" if key == "rating" else ""
+                details.append(f"{metadata[key]}{suffix}")
         print(f"[{source.citation_number}] " + " · ".join(details))
         print(source.document.page_content.replace("\n", " | "))
 
