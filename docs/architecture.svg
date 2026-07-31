@@ -100,7 +100,7 @@
   <rect x="500" y="382" width="170" height="98" class="node" fill="#78350f" stroke="#fbbf24"/>
   <text x="520" y="411" class="label">LOCAL OLLAMA</text>
   <text x="520" y="434" class="small">embedding + answer models</text>
-  <text x="520" y="453" class="small">source-ID citations</text>
+  <text x="520" y="453" class="small">validated citations</text>
   <text x="520" y="471" class="tiny">or explicit abstention</text>
 
   <rect x="720" y="382" width="170" height="98" class="node" fill="#881337" stroke="#fb7185"/>
