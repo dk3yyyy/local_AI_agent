@@ -231,7 +231,7 @@ def load_reviews(
 
     if resolved_mapping.date:
         raw_dates = dataframe[resolved_mapping.date]
-        dates = pd.to_datetime(raw_dates, errors="coerce")
+        dates = pd.to_datetime(raw_dates, errors="coerce", format="mixed")
         supplied = raw_dates.notna() & (raw_dates.astype("string").str.strip() != "")
         invalid_dates = supplied & dates.isna()
         if invalid_dates.any():
