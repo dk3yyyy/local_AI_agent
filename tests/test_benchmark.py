@@ -265,6 +265,22 @@ class EvaluationSetQualityTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "abstention cases"):
                 load_evaluation_cases(path)
 
+    def test_loader_rejects_abstention_cases_with_source_labels(self) -> None:
+        from evaluation import DEFAULT_EVALUATION_PATH
+
+        payload = json.loads(DEFAULT_EVALUATION_PATH.read_text(encoding="utf-8"))
+        case = payload["cases"][0]
+        case["expected_action"] = "abstain"
+        case["gold_source_ids"] = []
+        case["source_labels"] = ["Unexpected label"]
+        case["reference_facts"] = []
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "cases.json"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "abstention cases"):
+                load_evaluation_cases(path)
+
     def test_loader_rejects_string_term_lists_and_empty_terms(self) -> None:
         from evaluation import DEFAULT_EVALUATION_PATH
 

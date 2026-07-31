@@ -279,6 +279,13 @@ def load_evaluation_cases(
             raise ValueError(
                 f"evaluation case {case.case_id} has duplicate gold source IDs"
             )
+        if case.should_abstain and (
+            case.gold_source_ids or case.relevant_titles or case.reference_facts
+        ):
+            raise ValueError(
+                "abstention cases cannot declare gold sources, source labels, "
+                "or reference facts"
+            )
         if len(case.gold_source_ids) != len(case.relevant_titles):
             raise ValueError(
                 f"evaluation case {case.case_id} must label every gold source"
@@ -289,10 +296,6 @@ def load_evaluation_cases(
         ):
             raise ValueError(
                 f"evaluation case {case.case_id} has an empty reference fact"
-            )
-        if case.should_abstain and (case.gold_source_ids or case.reference_facts):
-            raise ValueError(
-                "abstention cases cannot declare gold sources or reference facts"
             )
         if not case.should_abstain and not case.gold_source_ids:
             raise ValueError("answer cases require at least one gold source ID")

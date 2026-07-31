@@ -1,8 +1,12 @@
 import json
 import tempfile
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
+from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
+
+from httpx import HTTPError
 
 from evaluation import (
     EvaluationCase,
@@ -10,7 +14,7 @@ from evaluation import (
     EvaluationObservation,
     RetrievalMetrics,
 )
-from main import _safe_endpoint, build_parser, run
+from main import _safe_endpoint, build_parser, main, run
 from ollama_health import OllamaHealth
 
 
@@ -109,6 +113,73 @@ class EvaluationCLIReportTest(unittest.TestCase):
         self.assertEqual(payload["configuration"]["ollama_version"], "0.32.5")
         self.assertEqual(payload["results"]["semantic_retrieval"]["mrr_at_k"], 1.0)
         self.assertIn("Retrieval comparison", markdown)
+
+    def test_evaluate_reports_late_ollama_provenance_failures(self) -> None:
+        case = EvaluationCase(
+            case_id="answer",
+            question="Is it crisp?",
+            relevant_titles=("Crisp",),
+            reference_facts=(),
+            category="quality",
+        )
+        observation = EvaluationObservation(
+            case_id="answer",
+            relevant_source_ids=frozenset({"a"}),
+            retrieved_source_ids=("a",),
+            cited_source_ids=("a",),
+            cited_text="crisp",
+            answer="It is crisp [1].",
+            abstained=False,
+        )
+        rag_metrics = EvaluationMetrics(1.0, 1.0, 1.0, 1.0, 1)
+        retrieval_metrics = RetrievalMetrics(1.0, 1.0, 1.0, 1, 5)
+        health = OllamaHealth(True, ("chat:latest", "embed:latest"), ())
+        failures = (
+            ("ollama_version", HTTPError("Ollama stopped")),
+            ("model_metadata", OSError("Ollama stopped")),
+        )
+
+        for target, error in failures:
+            with (
+                self.subTest(target=target),
+                tempfile.TemporaryDirectory() as directory,
+            ):
+                report_dir = Path(directory) / "evaluation"
+                stderr = StringIO()
+                stdout = StringIO()
+                patches = {
+                    "ollama_version": patch(
+                        "main.ollama_version", return_value="0.32.5"
+                    ),
+                    "model_metadata": patch("main.model_metadata", return_value={}),
+                }
+                patches[target] = patch(f"main.{target}", side_effect=error)
+                with (
+                    patch("main.load_reviews", return_value=[object()]),
+                    patch("main._health_for_arguments", return_value=health),
+                    patch("main._create_runtime", return_value=(object(), object())),
+                    patch("main.load_evaluation_cases", return_value=(case,)),
+                    patch(
+                        "main.run_rag_evaluation",
+                        return_value=(rag_metrics, (observation,)),
+                    ),
+                    patch(
+                        "main.run_bm25_baseline",
+                        return_value=(retrieval_metrics, (observation,)),
+                    ),
+                    patches["ollama_version"],
+                    patches["model_metadata"],
+                    redirect_stderr(stderr),
+                    redirect_stdout(stdout),
+                    self.assertRaises(SystemExit) as raised,
+                ):
+                    main(["evaluate", "--report-dir", str(report_dir)])
+
+                self.assertEqual(raised.exception.code, 2)
+                self.assertIn(
+                    "could not collect Ollama report metadata", stderr.getvalue()
+                )
+                self.assertNotIn("Traceback", stderr.getvalue())
 
 
 if __name__ == "__main__":

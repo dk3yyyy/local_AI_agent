@@ -10,6 +10,9 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
 
+from httpx import HTTPError
+from ollama import ResponseError
+
 from agent import answer_question, create_chat_model
 from evaluation import (
     DEFAULT_EVALUATION_PATH,
@@ -151,6 +154,20 @@ def _safe_endpoint(value: str) -> str:
     return urlunsplit((parsed.scheme, netloc, parsed.path, "", ""))
 
 
+def _ollama_report_metadata(arguments: argparse.Namespace):
+    try:
+        runtime_version = ollama_version(arguments.ollama_host)
+        models = model_metadata(
+            (arguments.chat_model, arguments.embedding_model),
+            host=arguments.ollama_host,
+        )
+    except (HTTPError, OSError, ResponseError) as error:
+        raise ValueError(
+            f"could not collect Ollama report metadata: {error}"
+        ) from error
+    return runtime_version, models
+
+
 def _file_sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -269,6 +286,7 @@ def run(arguments: argparse.Namespace) -> int:
                 f"abstained={observation.abstained}"
             )
         if arguments.report_dir is not None:
+            runtime_version, models = _ollama_report_metadata(arguments)
             report = build_evaluation_report(
                 cases=cases,
                 rag_metrics=metrics,
@@ -279,13 +297,10 @@ def run(arguments: argparse.Namespace) -> int:
                 configuration={
                     "chat_model": arguments.chat_model,
                     "embedding_model": arguments.embedding_model,
-                    "ollama_version": ollama_version(arguments.ollama_host),
+                    "ollama_version": runtime_version,
                     "ollama_host": _safe_endpoint(arguments.ollama_host),
                     "evidence_limit": arguments.limit,
-                    "models": model_metadata(
-                        (arguments.chat_model, arguments.embedding_model),
-                        host=arguments.ollama_host,
-                    ),
+                    "models": models,
                 },
                 provenance={
                     "application_version": __version__,
