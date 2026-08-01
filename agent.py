@@ -18,18 +18,22 @@ CITATION_VALIDATION_MESSAGE = (
 CITATION_PATTERN = re.compile(r"\[([A-Za-z0-9][A-Za-z0-9_-]*)\]")
 INSUFFICIENT_EVIDENCE_TOKEN = "INSUFFICIENT_EVIDENCE"
 REPAIRABLE_FAILURE_REASONS = frozenset(
-    {"missing_citations", "out_of_range_citation", "unknown_citation"}
+    {
+        "clean_abstention",
+        "missing_citations",
+        "out_of_range_citation",
+        "unknown_citation",
+    }
 )
 
 ANSWER_PROMPT = """You are a review analyst.
 Answer the question using only the supplied reviews. Do not add facts that are not present.
-Always answer every part that at least one supplied review supports. Mixed or incomplete evidence is
-not a reason to abstain; describe the limitation and answer only the supported portion. Every
-factual claim must cite one or more retrieved evidence numbers exactly as shown, for example
-[1]. Never cite an evidence number that is not supplied. Source IDs are validation metadata;
-do not copy them into the answer. Reply exactly INSUFFICIENT_EVIDENCE only when no supplied
-review answers any part of the question. Never use INSUFFICIENT_EVIDENCE as prose or place it
-beside an answer.
+When evidence is mixed or limited, say so clearly. Every factual claim must cite one or more
+retrieved evidence numbers exactly as shown, for example [1]. Never cite an evidence number
+that is not supplied. Source IDs are validation metadata; do not copy them into the answer.
+Answer when at least one supplied review directly addresses any part of the question; partial
+or conflicting evidence does not by itself mean that evidence is insufficient.
+If the supplied reviews do not answer the question, reply exactly INSUFFICIENT_EVIDENCE.
 
 Question:
 {question}
@@ -40,12 +44,13 @@ Supplied review records:
 Answer:
 """
 
-REPAIR_PROMPT = """You are repairing one rejected review-analysis response.
-Using only the supplied reviews, rewrite it once so every factual claim has one or more valid
-evidence citations such as [1]. Use only evidence numbers that appear below. Preserve supported
-meaning, remove unsupported claims, and answer every supported part even when evidence is mixed
-or incomplete. If no supplied review answers any part, reply exactly INSUFFICIENT_EVIDENCE.
-Never use INSUFFICIENT_EVIDENCE as prose or place it beside an answer.
+REPAIR_PROMPT = """You are a review analyst correcting a response that could not be accepted.
+Re-evaluate the question against the supplied reviews. Answer when at least one supplied review
+directly addresses any part of the question, even when evidence is partial or conflicting. State
+those limits rather than abstaining. Use only supplied facts, and cite every factual claim with
+one or more supplied evidence numbers such as [1]. Never cite an unsupplied number or source ID.
+If no supplied review addresses the question, reply exactly INSUFFICIENT_EVIDENCE. Never include
+that control token alongside an answer.
 
 Question:
 {question}
@@ -53,12 +58,7 @@ Question:
 Supplied review records:
 {context}
 
-Rejected response:
-<rejected_response>
-{rejected_response}
-</rejected_response>
-
-Rewritten answer:
+Corrected answer:
 """
 
 
@@ -253,7 +253,7 @@ def answer_question(
         context=context,
     )
     raw_response = _response_text(answer_model.invoke(prompt))
-    validated, failure_reason = _evaluate_model_response(raw_response, matches)
+    validated, initial_failure_reason = _evaluate_model_response(raw_response, matches)
     if validated is not None:
         validated_answer, sources = validated
         return AnswerResult(
@@ -262,29 +262,19 @@ def answer_question(
             retrieved_source_ids=retrieved_source_ids,
             raw_response=raw_response,
         )
-    if failure_reason == "clean_abstention":
-        return AnswerResult(
-            answer=NO_MATCH_MESSAGE,
-            sources=(),
-            retrieved_source_ids=retrieved_source_ids,
-            abstained=True,
-            raw_response=raw_response,
-            failure_reason=failure_reason,
-        )
-    if failure_reason not in REPAIRABLE_FAILURE_REASONS:
+
+    if initial_failure_reason not in REPAIRABLE_FAILURE_REASONS:
         return AnswerResult(
             answer=CITATION_VALIDATION_MESSAGE,
             sources=(),
             retrieved_source_ids=retrieved_source_ids,
             raw_response=raw_response,
-            failure_reason=failure_reason,
+            failure_reason=initial_failure_reason,
         )
 
-    initial_failure_reason = failure_reason
     repair_prompt = REPAIR_PROMPT.format(
         question=normalized_question,
         context=context,
-        rejected_response=raw_response,
     )
     repair_response = _response_text(answer_model.invoke(repair_prompt))
     repaired, repair_failure_reason = _evaluate_model_response(repair_response, matches)
@@ -299,7 +289,11 @@ def answer_question(
             initial_failure_reason=initial_failure_reason,
             repair_attempted=True,
         )
-    if repair_failure_reason == "clean_abstention":
+
+    if (
+        initial_failure_reason == "clean_abstention"
+        or repair_failure_reason == "clean_abstention"
+    ):
         return AnswerResult(
             answer=NO_MATCH_MESSAGE,
             sources=(),
@@ -311,6 +305,7 @@ def answer_question(
             failure_reason=repair_failure_reason,
             repair_attempted=True,
         )
+
     return AnswerResult(
         answer=CITATION_VALIDATION_MESSAGE,
         sources=(),

@@ -98,6 +98,11 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="write evaluation-report.json and README.md to this directory",
     )
+    evaluate_parser.add_argument(
+        "--include-raw-responses",
+        action="store_true",
+        help="include potentially sensitive raw model responses in the report",
+    )
     _add_runtime_arguments(evaluate_parser)
 
     chat_parser = subparsers.add_parser("chat", help="Start the interactive terminal")
@@ -314,6 +319,7 @@ def run(arguments: argparse.Namespace) -> int:
                     "dependency_versions": _dependency_versions(),
                     **_git_provenance(),
                 },
+                include_raw_responses=arguments.include_raw_responses,
             )
             json_path = arguments.report_dir / "evaluation-report.json"
             markdown_path = arguments.report_dir / "README.md"

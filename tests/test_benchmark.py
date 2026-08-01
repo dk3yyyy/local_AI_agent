@@ -213,6 +213,19 @@ class BenchmarkTest(unittest.TestCase):
         self.assertIn("Model-dependent results", markdown)
         self.assertIn("2026-07-31T00:00:00Z", markdown)
 
+        legacy_report = dict(report)
+        legacy_report["schema_version"] = 2
+        legacy_report.pop("diagnostics")
+        with tempfile.TemporaryDirectory() as directory:
+            markdown_path = Path(directory) / "legacy.md"
+            write_evaluation_report(
+                legacy_report,
+                json_path=Path(directory) / "legacy.json",
+                markdown_path=markdown_path,
+            )
+            legacy_markdown = markdown_path.read_text(encoding="utf-8")
+        self.assertIn("Model-dependent results", legacy_markdown)
+
     def test_report_serializes_raw_response_and_failure_diagnostics(self) -> None:
         case = EvaluationCase(
             case_id="answer",
@@ -266,6 +279,7 @@ class BenchmarkTest(unittest.TestCase):
             configuration={},
             provenance={},
             generated_at="2026-07-31T00:00:00Z",
+            include_raw_responses=True,
         )
 
         serialized = report["observations"]["rag"][0]

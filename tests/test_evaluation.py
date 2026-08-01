@@ -1,7 +1,9 @@
 import unittest
+from unittest.mock import patch
 
 from langchain_core.documents import Document
 
+from agent import AnswerResult
 from evaluation import (
     DEFAULT_EVALUATION_PATH,
     EvaluationCase,
@@ -166,6 +168,26 @@ class RAGEvaluationTest(unittest.TestCase):
         self.assertEqual(model.prompts, [])
         self.assertEqual(metrics.abstention_accuracy, 0.0)
 
+    def test_missing_source_id_is_classified_as_data_integrity_failure(self) -> None:
+        case = EvaluationCase(
+            case_id="answer",
+            question="Is the crust crisp?",
+            relevant_titles=("Best pizza",),
+            reference_facts=(),
+        )
+        malformed = AnswerResult(
+            answer="I could not produce an answer with valid citations.",
+            sources=(),
+            failure_reason="retrieved_source_missing_id",
+        )
+
+        with patch("evaluation.answer_question", return_value=malformed):
+            _, observations = run_rag_evaluation(
+                (case,), vector_store=EvaluationStore(), model=object()
+            )
+
+        self.assertEqual(observations[0].outcome, "retrieved_source_missing_id")
+
     def test_pipeline_preserves_raw_rejection_and_repair_diagnostics(self) -> None:
         case = EvaluationCase(
             case_id="answer",
@@ -218,21 +240,67 @@ class RAGEvaluationTest(unittest.TestCase):
         self.assertEqual(observations[0].failure_reason, "clean_abstention")
         self.assertEqual(metrics.abstention_recall, 1.0)
 
-    def test_pipeline_labels_a_rejection_after_failed_repair(self) -> None:
+    def test_pipeline_labels_citation_rejection_after_failed_repair(self) -> None:
         case = EvaluationCase(
             case_id="answer",
             question="Is the crust crisp?",
             relevant_titles=("Best pizza",),
-            reference_facts=(
-                ReferenceFact(
-                    answer_terms=("crispy",),
-                    source_terms=("perfectly crispy",),
-                ),
-            ),
+            reference_facts=(),
         )
         model = EvaluationSequenceModel(
             "The crust is crispy.",
-            "Still no citation.",
+            "The crust is crispy.",
+        )
+
+        _, observations = run_rag_evaluation(
+            (case,), vector_store=EvaluationStore(), model=model
+        )
+
+        observation = observations[0]
+        self.assertEqual(
+            observation.outcome,
+            "citation_validation_rejection_after_repair",
+        )
+        self.assertEqual(observation.failure_reason, "missing_citations")
+        self.assertTrue(observation.repair_attempted)
+
+    def test_pipeline_labels_a_preserved_initial_abstention_truthfully(self) -> None:
+        case = EvaluationCase(
+            case_id="abstain",
+            question="Is parking available?",
+            relevant_titles=(),
+            reference_facts=(),
+            should_abstain=True,
+        )
+        model = EvaluationSequenceModel(
+            "INSUFFICIENT_EVIDENCE",
+            "Unsupported parking claim [9].",
+        )
+
+        metrics, observations = run_rag_evaluation(
+            (case,), vector_store=EvaluationStore(), model=model
+        )
+
+        observation = observations[0]
+        self.assertEqual(
+            observation.outcome,
+            "model_abstention_preserved_after_failed_repair",
+        )
+        self.assertEqual(observation.initial_failure_reason, "clean_abstention")
+        self.assertEqual(observation.failure_reason, "out_of_range_citation")
+        self.assertEqual(metrics.abstention_recall, 1.0)
+
+    def test_pipeline_labels_an_abstention_confirmed_by_repair(self) -> None:
+        case = EvaluationCase(
+            case_id="abstain",
+            question="Is parking available?",
+            relevant_titles=(),
+            reference_facts=(),
+            should_abstain=True,
+        )
+        model = EvaluationSequenceModel(
+            "INSUFFICIENT_EVIDENCE",
+            "INSUFFICIENT_EVIDENCE",
         )
 
         metrics, observations = run_rag_evaluation(
@@ -241,11 +309,9 @@ class RAGEvaluationTest(unittest.TestCase):
 
         self.assertEqual(
             observations[0].outcome,
-            "citation_validation_rejection_after_repair",
+            "model_abstention_confirmed_after_repair",
         )
-        self.assertTrue(observations[0].repair_attempted)
-        self.assertEqual(observations[0].failure_reason, "missing_citations")
-        self.assertEqual(metrics.answer_success_rate, 0.0)
+        self.assertEqual(metrics.abstention_recall, 1.0)
 
     def test_penalizes_missing_retrieval_invalid_citation_and_false_answer(
         self,
