@@ -406,6 +406,8 @@ class AnswerQuestionTest(unittest.TestCase):
         self.assertEqual(result.answer, CITATION_VALIDATION_MESSAGE)
         self.assertEqual(result.sources, ())
         self.assertFalse(result.abstained)
+        self.assertEqual(result.failure_reason, "missing_citations")
+        self.assertTrue(result.repair_attempted)
 
     def test_does_not_call_model_when_filters_match_no_reviews(self) -> None:
         model = FakeModel()

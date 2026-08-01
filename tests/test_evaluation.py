@@ -240,6 +240,30 @@ class RAGEvaluationTest(unittest.TestCase):
         self.assertEqual(observations[0].failure_reason, "clean_abstention")
         self.assertEqual(metrics.abstention_recall, 1.0)
 
+    def test_pipeline_labels_citation_rejection_after_failed_repair(self) -> None:
+        case = EvaluationCase(
+            case_id="answer",
+            question="Is the crust crisp?",
+            relevant_titles=("Best pizza",),
+            reference_facts=(),
+        )
+        model = EvaluationSequenceModel(
+            "The crust is crispy.",
+            "The crust is crispy.",
+        )
+
+        _, observations = run_rag_evaluation(
+            (case,), vector_store=EvaluationStore(), model=model
+        )
+
+        observation = observations[0]
+        self.assertEqual(
+            observation.outcome,
+            "citation_validation_rejection_after_repair",
+        )
+        self.assertEqual(observation.failure_reason, "missing_citations")
+        self.assertTrue(observation.repair_attempted)
+
     def test_pipeline_labels_a_preserved_initial_abstention_truthfully(self) -> None:
         case = EvaluationCase(
             case_id="abstain",

@@ -494,7 +494,11 @@ def run_rag_evaluation(
             else:
                 outcome = "model_abstention_after_repair"
         elif not result.sources:
-            outcome = "citation_validation_rejection"
+            outcome = (
+                "citation_validation_rejection_after_repair"
+                if result.repair_attempted
+                else "citation_validation_rejection"
+            )
         elif result.repair_attempted:
             outcome = "answered_after_repair"
         else:
