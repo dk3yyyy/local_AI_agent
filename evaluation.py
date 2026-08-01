@@ -50,6 +50,11 @@ class EvaluationObservation:
     abstained: bool
     outcome: str = "unknown"
     latency_ms: float | None = None
+    raw_model_response: str = ""
+    repair_model_response: str | None = None
+    initial_failure_reason: str | None = None
+    failure_reason: str | None = None
+    repair_attempted: bool = False
 
 
 @dataclass(frozen=True)
@@ -409,7 +414,10 @@ def score_evaluation(
 
         cited = set(observation.cited_source_ids)
         retrieved = set(observation.retrieved_source_ids)
-        answer_succeeded = observation.outcome == "answered" or (
+        answer_succeeded = observation.outcome in {
+            "answered",
+            "answered_after_repair",
+        } or (
             observation.outcome == "unknown"
             and not observation.abstained
             and bool(cited)
@@ -472,9 +480,19 @@ def run_rag_evaluation(
         if not result.retrieved_source_ids:
             outcome = "empty_retrieval"
         elif result.abstained:
-            outcome = "model_abstention"
+            outcome = (
+                "model_abstention_after_repair"
+                if result.repair_attempted
+                else "model_abstention"
+            )
         elif not result.sources:
-            outcome = "citation_validation_rejection"
+            outcome = (
+                "citation_validation_rejection_after_repair"
+                if result.repair_attempted
+                else "citation_validation_rejection"
+            )
+        elif result.repair_attempted:
+            outcome = "answered_after_repair"
         else:
             outcome = "answered"
         observations.append(
@@ -492,6 +510,11 @@ def run_rag_evaluation(
                 abstained=result.abstained,
                 outcome=outcome,
                 latency_ms=latency_ms,
+                raw_model_response=result.raw_response,
+                repair_model_response=result.repair_response,
+                initial_failure_reason=result.initial_failure_reason,
+                failure_reason=result.failure_reason,
+                repair_attempted=result.repair_attempted,
             )
         )
 
@@ -626,8 +649,19 @@ def build_evaluation_report(
         for observation in observations
         if observation.latency_ms is not None
     ]
+    outcome_counts = Counter(observation.outcome for observation in observations)
+    initial_failure_counts = Counter(
+        observation.initial_failure_reason
+        for observation in observations
+        if observation.initial_failure_reason is not None
+    )
+    final_failure_counts = Counter(
+        observation.failure_reason
+        for observation in observations
+        if observation.failure_reason is not None
+    )
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "generated_at": timestamp,
         "configuration": dict(configuration),
         "provenance": dict(provenance),
@@ -646,6 +680,15 @@ def build_evaluation_report(
             "rag_total_latency_ms": round(sum(latencies), 3),
             "rag_mean_latency_ms": round(_mean(latencies), 3),
             "rag_median_latency_ms": round(median(latencies), 3) if latencies else 0.0,
+        },
+        "diagnostics": {
+            "outcomes": dict(sorted(outcome_counts.items())),
+            "initial_failure_reasons": dict(sorted(initial_failure_counts.items())),
+            "final_failure_reasons": dict(sorted(final_failure_counts.items())),
+            "repair_attempt_count": sum(
+                observation.repair_attempted for observation in observations
+            ),
+            "repair_success_count": outcome_counts["answered_after_repair"],
         },
         "observations": {
             "rag": [_observation_as_dict(observation) for observation in observations],
@@ -667,6 +710,11 @@ def _observation_as_dict(observation: EvaluationObservation) -> dict[str, Any]:
         "abstained": observation.abstained,
         "outcome": observation.outcome,
         "latency_ms": observation.latency_ms,
+        "raw_model_response": observation.raw_model_response,
+        "repair_model_response": observation.repair_model_response,
+        "initial_failure_reason": observation.initial_failure_reason,
+        "failure_reason": observation.failure_reason,
+        "repair_attempted": observation.repair_attempted,
     }
 
 
@@ -685,6 +733,7 @@ def _report_markdown(report: Mapping[str, Any]) -> str:
     configuration = report["configuration"]
     provenance = report["provenance"]
     timing = report["timing"]
+    diagnostics = report["diagnostics"]
     return "\n".join(
         (
             "# Evaluation report",
@@ -732,6 +781,20 @@ def _report_markdown(report: Mapping[str, Any]) -> str:
             f"| Expected-action accuracy | {_metric(rag['expected_action_accuracy'])} |",
             f"| Answer success (answerable cases) | {_metric(rag['answer_success_rate'])} |",
             f"| Abstention recall (abstention cases) | {_metric(rag['abstention_recall'])} |",
+            "",
+            "## Answer diagnostics",
+            "",
+            f"- Outcomes: `{json.dumps(diagnostics['outcomes'], sort_keys=True)}`",
+            (
+                "- Initial validation reasons: `"
+                f"{json.dumps(diagnostics['initial_failure_reasons'], sort_keys=True)}`"
+            ),
+            (
+                "- Final non-success reasons: `"
+                f"{json.dumps(diagnostics['final_failure_reasons'], sort_keys=True)}`"
+            ),
+            f"- Repair attempts: **{diagnostics['repair_attempt_count']}**",
+            f"- Successful repairs: **{diagnostics['repair_success_count']}**",
             "",
             "## Timing",
             "",

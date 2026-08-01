@@ -140,7 +140,30 @@ uv run local-ai-agent evaluate --report-dir evaluation/results/my-run
 The versioned case manifest is tied to the dataset SHA-256 and uses immutable
 content-derived source IDs for gold relevance. The report records model tags
 and immutable Ollama digests, dataset and case-set hashes, retrieval limit,
-runtime versions, per-case RAG and BM25 rankings, and aggregate metrics.
+runtime versions, per-case RAG and BM25 rankings, and aggregate metrics. Each
+RAG observation also retains the first raw model response, any one-shot repair
+response, the initial and final structured validation reasons, and whether a
+repair was attempted. These diagnostics stay in the evaluation artifact; the
+CLI and dashboard continue to expose only validated answers or safe fallback
+messages.
+
+Compare answer models without changing the embedding model or case set:
+
+```bash
+uv run local-ai-agent evaluate \
+  --chat-model llama3.2 \
+  --report-dir /tmp/local-ai-agent-llama3.2
+
+uv run local-ai-agent evaluate \
+  --chat-model <installed-7b-or-8b-instruct-model> \
+  --report-dir /tmp/local-ai-agent-stronger-model
+```
+
+Keep the reports outside the repository so benchmark artifacts do not make the
+worktree dirty. Compare answer success, citation validity, abstention recall,
+latency, and the per-case failure reasons rather than optimizing one aggregate
+score.
+
 Retrieval quality is reported as recall@k, hit rate@k, and MRR@k for both
 semantic search and the BM25 baseline. Relevance judgments are known-positive,
 not exhaustive. The generated report is evidence for this fixed benchmark

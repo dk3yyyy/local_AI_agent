@@ -191,7 +191,7 @@ class BenchmarkTest(unittest.TestCase):
             generated_at="2026-07-31T00:00:00Z",
         )
 
-        self.assertEqual(report["schema_version"], 2)
+        self.assertEqual(report["schema_version"], 3)
         self.assertEqual(report["evaluation_set"]["case_count"], 2)
         self.assertEqual(report["evaluation_set"]["abstention_case_count"], 1)
         self.assertEqual(report["results"]["bm25_baseline"]["recall_at_k"], 0.0)
@@ -212,6 +212,91 @@ class BenchmarkTest(unittest.TestCase):
         self.assertIn("BM25 keyword baseline", markdown)
         self.assertIn("Model-dependent results", markdown)
         self.assertIn("2026-07-31T00:00:00Z", markdown)
+
+    def test_report_serializes_raw_response_and_failure_diagnostics(self) -> None:
+        case = EvaluationCase(
+            case_id="answer",
+            question="Is it crisp?",
+            relevant_titles=("Crisp",),
+            reference_facts=(),
+            category="quality",
+        )
+        observation = EvaluationObservation(
+            case_id="answer",
+            relevant_source_ids=frozenset({"a"}),
+            retrieved_source_ids=("a",),
+            cited_source_ids=(),
+            cited_text="",
+            answer="I could not produce an answer with valid citations.",
+            abstained=False,
+            outcome="citation_validation_rejection",
+            raw_model_response="The crust is crisp.",
+            repair_model_response="The crust is crisp [9].",
+            initial_failure_reason="missing_citations",
+            failure_reason="out_of_range_citation",
+            repair_attempted=True,
+        )
+
+        report = build_evaluation_report(
+            cases=(case,),
+            rag_metrics={
+                "retrieval_recall": 1.0,
+                "citation_validity": 0.0,
+                "reference_term_support_proxy": 0.0,
+                "expected_action_accuracy": 0.0,
+                "answer_success_rate": 0.0,
+                "abstention_recall": 0.0,
+                "case_count": 1,
+            },
+            semantic_metrics={
+                "recall_at_k": 1.0,
+                "hit_rate_at_k": 1.0,
+                "mrr_at_k": 1.0,
+                "evaluated_case_count": 1,
+                "limit": 5,
+            },
+            baseline_metrics={
+                "recall_at_k": 0.0,
+                "hit_rate_at_k": 0.0,
+                "mrr_at_k": 0.0,
+                "evaluated_case_count": 1,
+                "limit": 5,
+            },
+            observations=(observation,),
+            configuration={},
+            provenance={},
+            generated_at="2026-07-31T00:00:00Z",
+        )
+
+        serialized = report["observations"]["rag"][0]
+        self.assertEqual(serialized["raw_model_response"], "The crust is crisp.")
+        self.assertEqual(serialized["repair_model_response"], "The crust is crisp [9].")
+        self.assertEqual(serialized["initial_failure_reason"], "missing_citations")
+        self.assertEqual(serialized["failure_reason"], "out_of_range_citation")
+        self.assertTrue(serialized["repair_attempted"])
+        self.assertEqual(
+            report["diagnostics"]["initial_failure_reasons"],
+            {"missing_citations": 1},
+        )
+        self.assertEqual(
+            report["diagnostics"]["final_failure_reasons"],
+            {"out_of_range_citation": 1},
+        )
+        self.assertEqual(report["diagnostics"]["repair_attempt_count"], 1)
+        self.assertEqual(report["diagnostics"]["repair_success_count"], 0)
+
+        with tempfile.TemporaryDirectory() as directory:
+            markdown_path = Path(directory) / "README.md"
+            write_evaluation_report(
+                report,
+                json_path=Path(directory) / "report.json",
+                markdown_path=markdown_path,
+            )
+            markdown = markdown_path.read_text(encoding="utf-8")
+
+        self.assertIn("Answer diagnostics", markdown)
+        self.assertIn("missing_citations", markdown)
+        self.assertIn("out_of_range_citation", markdown)
 
 
 class EvaluationSetQualityTest(unittest.TestCase):
