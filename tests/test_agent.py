@@ -164,13 +164,40 @@ class AnswerQuestionTest(unittest.TestCase):
         result = answer_question(
             "Is parking available?",
             vector_store=FakeStore([(document, 0.5)]),
-            model=FakeModel("INSUFFICIENT_EVIDENCE"),
+            model=FakeModel("\n  INSUFFICIENT_EVIDENCE  \n"),
         )
 
         self.assertEqual(result.answer, NO_MATCH_MESSAGE)
         self.assertEqual(result.sources, ())
         self.assertEqual(result.retrieved_source_ids, ("review-1",))
         self.assertTrue(result.abstained)
+
+    def test_rejects_answer_mixed_with_insufficient_evidence_token(self) -> None:
+        document = Document(
+            page_content="The crust was perfectly crispy.",
+            metadata={"source_id": "review-1"},
+            id="review-1",
+        )
+
+        responses = {
+            "followed": "Guests praise the crispy crust [1].\n\nINSUFFICIENT_EVIDENCE",
+            "preceded": "INSUFFICIENT_EVIDENCE\nGuests praise the crispy crust [1].",
+            "embedded": ("The raw marker INSUFFICIENT_EVIDENCE must not be shown [1]."),
+        }
+
+        for position, response in responses.items():
+            with self.subTest(position=position):
+                result = answer_question(
+                    "What do guests say about the crust?",
+                    vector_store=FakeStore([(document, 0.5)]),
+                    model=FakeModel(response),
+                )
+
+                self.assertEqual(result.answer, CITATION_VALIDATION_MESSAGE)
+                self.assertNotIn("INSUFFICIENT_EVIDENCE", result.answer)
+                self.assertEqual(result.sources, ())
+                self.assertEqual(result.retrieved_source_ids, ("review-1",))
+                self.assertFalse(result.abstained)
 
     def test_does_not_call_model_when_filters_match_no_reviews(self) -> None:
         model = FakeModel()
