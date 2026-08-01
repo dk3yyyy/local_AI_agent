@@ -28,6 +28,16 @@ class EvaluationModel:
         return FakeResponse(self.response)
 
 
+class EvaluationSequenceModel:
+    def __init__(self, *responses: str) -> None:
+        self.responses = list(responses)
+        self.prompts: list[str] = []
+
+    def invoke(self, prompt: str) -> FakeResponse:
+        self.prompts.append(prompt)
+        return FakeResponse(self.responses.pop(0))
+
+
 class EvaluationStore:
     def __init__(self, *, return_matches: bool = True) -> None:
         self.search_calls = 0
@@ -155,6 +165,58 @@ class RAGEvaluationTest(unittest.TestCase):
         self.assertFalse(observations[0].abstained)
         self.assertEqual(model.prompts, [])
         self.assertEqual(metrics.abstention_accuracy, 0.0)
+
+    def test_pipeline_preserves_raw_rejection_and_repair_diagnostics(self) -> None:
+        case = EvaluationCase(
+            case_id="answer",
+            question="Is the crust crisp?",
+            relevant_titles=("Best pizza",),
+            reference_facts=(
+                ReferenceFact(
+                    answer_terms=("crispy",),
+                    source_terms=("perfectly crispy",),
+                ),
+            ),
+        )
+        model = EvaluationSequenceModel(
+            "The crust is crispy.",
+            "The crust is crispy [1].",
+        )
+
+        metrics, observations = run_rag_evaluation(
+            (case,), vector_store=EvaluationStore(), model=model
+        )
+
+        observation = observations[0]
+        self.assertEqual(observation.outcome, "answered_after_repair")
+        self.assertEqual(observation.raw_model_response, "The crust is crispy.")
+        self.assertEqual(observation.repair_model_response, "The crust is crispy [1].")
+        self.assertEqual(observation.initial_failure_reason, "missing_citations")
+        self.assertIsNone(observation.failure_reason)
+        self.assertTrue(observation.repair_attempted)
+        self.assertEqual(metrics.answer_success_rate, 1.0)
+
+    def test_pipeline_labels_an_abstention_returned_by_repair(self) -> None:
+        case = EvaluationCase(
+            case_id="abstain",
+            question="Is parking available?",
+            relevant_titles=(),
+            reference_facts=(),
+            should_abstain=True,
+        )
+        model = EvaluationSequenceModel(
+            "Parking is available.",
+            "INSUFFICIENT_EVIDENCE",
+        )
+
+        metrics, observations = run_rag_evaluation(
+            (case,), vector_store=EvaluationStore(), model=model
+        )
+
+        self.assertEqual(observations[0].outcome, "model_abstention_after_repair")
+        self.assertTrue(observations[0].repair_attempted)
+        self.assertEqual(observations[0].failure_reason, "clean_abstention")
+        self.assertEqual(metrics.abstention_recall, 1.0)
 
     def test_penalizes_missing_retrieval_invalid_citation_and_false_answer(
         self,
