@@ -188,6 +188,12 @@ def answer_question(
             retrieved_source_ids=retrieved_source_ids,
             abstained=True,
         )
+    if INSUFFICIENT_EVIDENCE_TOKEN in normalized_answer:
+        return AnswerResult(
+            answer=CITATION_VALIDATION_MESSAGE,
+            sources=(),
+            retrieved_source_ids=retrieved_source_ids,
+        )
     validated = _validate_and_number_citations(normalized_answer, matches)
     if validated is None:
         return AnswerResult(

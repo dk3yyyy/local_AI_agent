@@ -3,9 +3,39 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+from langchain_core.documents import Document
 from streamlit.testing.v1 import AppTest
 
+import agent
 import ollama_health
+import vector
+
+
+class MixedTokenModel:
+    def invoke(self, _: str) -> str:
+        return "Guests praise the crispy crust [1].\n\nINSUFFICIENT_EVIDENCE"
+
+
+class DashboardStore:
+    def __init__(self) -> None:
+        self.document = Document(
+            page_content="The crust was perfectly crispy.",
+            metadata={
+                "source_id": "review-1",
+                "rating": 5,
+                "date": "2024-01-10",
+            },
+            id="review-1",
+        )
+
+    def get(self, **_: object) -> dict[str, list[str]]:
+        return {"ids": ["review-1"]}
+
+    def similarity_search_with_score(
+        self, _: str, *, k: int, filter: dict | None = None
+    ) -> list[tuple[Document, float]]:
+        del filter
+        return [(self.document, 0.1)][:k]
 
 
 class DashboardRenderTest(unittest.TestCase):
@@ -73,6 +103,30 @@ Nigeria,Atlas Pizza,Neutral,Fair meal,2026-01-03,The meal was acceptable.
             [item.label for item in application.multiselect],
             ["Sentiment", "Restaurant", "Country or region"],
         )
+
+    def test_does_not_render_mixed_insufficient_evidence_token(self) -> None:
+        health = ollama_health.OllamaHealth(
+            True,
+            ("llama3.2:latest", "mxbai-embed-large:latest"),
+            (),
+        )
+        host = "http://dashboard-token-regression:11434"
+        with (
+            patch.object(ollama_health, "DEFAULT_OLLAMA_HOST", host),
+            patch.object(ollama_health, "check_ollama", return_value=health),
+            patch.object(vector, "create_vector_store", return_value=DashboardStore()),
+            patch.object(agent, "create_chat_model", return_value=MixedTokenModel()),
+        ):
+            application = AppTest.from_file("dashboard.py").run(timeout=30)
+            application.chat_input[0].set_value(
+                "What do guests say about the crust?"
+            ).run(timeout=30)
+
+        self.assertEqual(list(application.exception), [])
+        rendered_markdown = "\n".join(item.value for item in application.markdown)
+        self.assertIn("I could not produce an answer with citations", rendered_markdown)
+        self.assertNotIn("INSUFFICIENT_EVIDENCE", rendered_markdown)
+        self.assertNotIn("#### Evidence", rendered_markdown)
 
 
 if __name__ == "__main__":
