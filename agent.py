@@ -83,6 +83,19 @@ def _format_context(matches: list[ReviewMatch]) -> str:
     return "\n\n".join(sections)
 
 
+def _remove_standalone_control_token(answer: str) -> str | None:
+    if INSUFFICIENT_EVIDENCE_TOKEN not in answer:
+        return answer
+    retained_lines: list[str] = []
+    for line in answer.splitlines():
+        if line.strip() == INSUFFICIENT_EVIDENCE_TOKEN:
+            continue
+        if INSUFFICIENT_EVIDENCE_TOKEN in line:
+            return None
+        retained_lines.append(line)
+    return "\n".join(retained_lines).strip()
+
+
 def _validate_and_number_citations(
     answer: str,
     matches: list[ReviewMatch],
@@ -188,7 +201,8 @@ def answer_question(
             retrieved_source_ids=retrieved_source_ids,
             abstained=True,
         )
-    if INSUFFICIENT_EVIDENCE_TOKEN in normalized_answer:
+    normalized_answer = _remove_standalone_control_token(normalized_answer)
+    if normalized_answer is None:
         return AnswerResult(
             answer=CITATION_VALIDATION_MESSAGE,
             sources=(),

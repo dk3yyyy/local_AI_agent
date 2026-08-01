@@ -172,7 +172,9 @@ class AnswerQuestionTest(unittest.TestCase):
         self.assertEqual(result.retrieved_source_ids, ("review-1",))
         self.assertTrue(result.abstained)
 
-    def test_rejects_answer_mixed_with_insufficient_evidence_token(self) -> None:
+    def test_accepts_cited_answer_with_standalone_insufficient_token_line(
+        self,
+    ) -> None:
         document = Document(
             page_content="The crust was perfectly crispy.",
             metadata={"source_id": "review-1"},
@@ -182,7 +184,9 @@ class AnswerQuestionTest(unittest.TestCase):
         responses = {
             "followed": "Guests praise the crispy crust [1].\n\nINSUFFICIENT_EVIDENCE",
             "preceded": "INSUFFICIENT_EVIDENCE\nGuests praise the crispy crust [1].",
-            "embedded": ("The raw marker INSUFFICIENT_EVIDENCE must not be shown [1]."),
+            "multiline_whitespace": (
+                "\n  INSUFFICIENT_EVIDENCE  \n\nGuests praise the crispy crust [1].\n"
+            ),
         }
 
         for position, response in responses.items():
@@ -193,11 +197,49 @@ class AnswerQuestionTest(unittest.TestCase):
                     model=FakeModel(response),
                 )
 
-                self.assertEqual(result.answer, CITATION_VALIDATION_MESSAGE)
+                self.assertEqual(result.answer, "Guests praise the crispy crust [1].")
                 self.assertNotIn("INSUFFICIENT_EVIDENCE", result.answer)
-                self.assertEqual(result.sources, ())
+                self.assertEqual(len(result.sources), 1)
+                self.assertEqual(result.sources[0].document.id, "review-1")
                 self.assertEqual(result.retrieved_source_ids, ("review-1",))
                 self.assertFalse(result.abstained)
+
+    def test_rejects_insufficient_evidence_token_embedded_in_prose(self) -> None:
+        document = Document(
+            page_content="The crust was perfectly crispy.",
+            metadata={"source_id": "review-1"},
+            id="review-1",
+        )
+
+        result = answer_question(
+            "What do guests say about the crust?",
+            vector_store=FakeStore([(document, 0.5)]),
+            model=FakeModel(
+                "The raw marker INSUFFICIENT_EVIDENCE must not be shown [1]."
+            ),
+        )
+
+        self.assertEqual(result.answer, CITATION_VALIDATION_MESSAGE)
+        self.assertNotIn("INSUFFICIENT_EVIDENCE", result.answer)
+        self.assertEqual(result.sources, ())
+        self.assertFalse(result.abstained)
+
+    def test_rejects_uncited_answer_after_removing_control_token_line(self) -> None:
+        document = Document(
+            page_content="The crust was perfectly crispy.",
+            metadata={"source_id": "review-1"},
+            id="review-1",
+        )
+
+        result = answer_question(
+            "What do guests say about the crust?",
+            vector_store=FakeStore([(document, 0.5)]),
+            model=FakeModel("Guests praise the crust.\nINSUFFICIENT_EVIDENCE"),
+        )
+
+        self.assertEqual(result.answer, CITATION_VALIDATION_MESSAGE)
+        self.assertEqual(result.sources, ())
+        self.assertFalse(result.abstained)
 
     def test_does_not_call_model_when_filters_match_no_reviews(self) -> None:
         model = FakeModel()
