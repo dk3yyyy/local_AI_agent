@@ -5,13 +5,19 @@
 [![Streamlit](https://img.shields.io/badge/dashboard-Streamlit-FF4B4B.svg)](https://streamlit.io/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-A local-first review-intelligence application powered by Ollama and embedded ChromaDB. Explore restaurant-review metrics, filter evidence, upload compatible CSV datasets, and ask grounded questions with validated source citations.
+A local-first review-intelligence application powered by Ollama and embedded ChromaDB. Explore the bundled restaurant dataset or map almost any review CSV, then filter the evidence and ask grounded questions with validated source citations.
 
 By default, runtime review data, embeddings, and prompts are processed by embedded Chroma and Ollama on the same machine. If `OLLAMA_HOST` points to another computer or hosted endpoint, prompts and retrieved review excerpts are sent there. Installing dependencies and downloading models also use the network.
 
+<p align="center">
+  <img src="docs/assets/review-intelligence-dashboard.jpg" alt="Review-intelligence dashboard showing 123 reviews, rating metrics, a five-star distribution chart, a review table, and the grounded-question input" width="100%">
+</p>
+
+<p align="center"><em>The bundled dataset in its populated dashboard state: adaptive metrics, rating distribution, review evidence, and the question surface in one view.</em></p>
+
 ## Highlights
 
-- **Visual dashboard:** rating metrics, distribution chart, date and rating filters, and review browser.
+- **Visual dashboard:** adaptive metrics, distribution charts, rating/date/category filters, a review browser, and a grounded-question surface.
 - **Validated citations:** short evidence citations map strictly to stable retrieved source IDs; an invalid or premature-abstention response gets one bounded correction attempt, then invented or missing citations fail safely.
 - **Safe offline state:** analytics still load when Ollama is unavailable, while the app shows exact setup commands instead of crashing.
 - **Adaptive CSV upload:** automatically detect common headers, manually map unfamiliar names, and isolate every dataset in content-addressed Chroma storage.
@@ -30,7 +36,7 @@ See the [architecture diagram and boundary notes](docs/architecture.md).
 
 - [Python 3.11 or newer](https://www.python.org/downloads/)
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
-- [Ollama](https://ollama.com/download)
+- [Ollama](https://ollama.com/download) for semantic indexing, questions, and evaluations; the analytics dashboard still works without it
 - Enough local memory and disk space for the selected models
 
 ## Quick start
@@ -43,7 +49,7 @@ cd local_AI_agent
 uv sync
 ```
 
-### 2. Start Ollama
+### 2. Start Ollama for semantic questions
 
 The Ollama desktop application starts the service automatically on supported systems. For a manual or headless installation, run:
 
@@ -52,6 +58,8 @@ ollama serve
 ```
 
 Keep that process running in another terminal.
+
+You can skip this step for an analytics-only dashboard preview. Metrics, filters, charts, and review browsing remain available while the question input shows the model setup required.
 
 ### 3. Download the required models
 
