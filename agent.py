@@ -17,6 +17,9 @@ CITATION_VALIDATION_MESSAGE = (
 )
 CITATION_PATTERN = re.compile(r"\[([A-Za-z0-9][A-Za-z0-9_-]*)\]")
 INSUFFICIENT_EVIDENCE_TOKEN = "INSUFFICIENT_EVIDENCE"
+REPAIRABLE_FAILURE_REASONS = frozenset(
+    {"missing_citations", "out_of_range_citation", "unknown_citation"}
+)
 
 ANSWER_PROMPT = """You are a review analyst.
 Answer the question using only the supplied reviews. Do not add facts that are not present.
@@ -265,6 +268,14 @@ def answer_question(
             sources=(),
             retrieved_source_ids=retrieved_source_ids,
             abstained=True,
+            raw_response=raw_response,
+            failure_reason=failure_reason,
+        )
+    if failure_reason not in REPAIRABLE_FAILURE_REASONS:
+        return AnswerResult(
+            answer=CITATION_VALIDATION_MESSAGE,
+            sources=(),
+            retrieved_source_ids=retrieved_source_ids,
             raw_response=raw_response,
             failure_reason=failure_reason,
         )

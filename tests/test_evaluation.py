@@ -218,6 +218,35 @@ class RAGEvaluationTest(unittest.TestCase):
         self.assertEqual(observations[0].failure_reason, "clean_abstention")
         self.assertEqual(metrics.abstention_recall, 1.0)
 
+    def test_pipeline_labels_a_rejection_after_failed_repair(self) -> None:
+        case = EvaluationCase(
+            case_id="answer",
+            question="Is the crust crisp?",
+            relevant_titles=("Best pizza",),
+            reference_facts=(
+                ReferenceFact(
+                    answer_terms=("crispy",),
+                    source_terms=("perfectly crispy",),
+                ),
+            ),
+        )
+        model = EvaluationSequenceModel(
+            "The crust is crispy.",
+            "Still no citation.",
+        )
+
+        metrics, observations = run_rag_evaluation(
+            (case,), vector_store=EvaluationStore(), model=model
+        )
+
+        self.assertEqual(
+            observations[0].outcome,
+            "citation_validation_rejection_after_repair",
+        )
+        self.assertTrue(observations[0].repair_attempted)
+        self.assertEqual(observations[0].failure_reason, "missing_citations")
+        self.assertEqual(metrics.answer_success_rate, 0.0)
+
     def test_penalizes_missing_retrieval_invalid_citation_and_false_answer(
         self,
     ) -> None:

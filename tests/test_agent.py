@@ -306,12 +306,14 @@ class AnswerQuestionTest(unittest.TestCase):
             id="review-1",
         )
 
+        model = SequenceModel(
+            "The raw marker INSUFFICIENT_EVIDENCE must not be shown [1].",
+            "This response must never be requested [1].",
+        )
         result = answer_question(
             "What do guests say about the crust?",
             vector_store=FakeStore([(document, 0.5)]),
-            model=FakeModel(
-                "The raw marker INSUFFICIENT_EVIDENCE must not be shown [1]."
-            ),
+            model=model,
         )
 
         self.assertEqual(result.answer, CITATION_VALIDATION_MESSAGE)
@@ -319,6 +321,31 @@ class AnswerQuestionTest(unittest.TestCase):
         self.assertEqual(result.sources, ())
         self.assertFalse(result.abstained)
         self.assertEqual(result.failure_reason, "embedded_control_token")
+        self.assertFalse(result.repair_attempted)
+        self.assertEqual(len(model.prompts), 1)
+
+    def test_rejects_empty_remainder_without_attempting_repair(self) -> None:
+        document = Document(
+            page_content="The crust was perfectly crispy.",
+            metadata={"source_id": "review-1"},
+            id="review-1",
+        )
+        model = SequenceModel(
+            "INSUFFICIENT_EVIDENCE\nINSUFFICIENT_EVIDENCE",
+            "This response must never be requested [1].",
+        )
+
+        result = answer_question(
+            "What do guests say about the crust?",
+            vector_store=FakeStore([(document, 0.5)]),
+            model=model,
+        )
+
+        self.assertEqual(result.answer, CITATION_VALIDATION_MESSAGE)
+        self.assertEqual(result.sources, ())
+        self.assertEqual(result.failure_reason, "invalid_remainder")
+        self.assertFalse(result.repair_attempted)
+        self.assertEqual(len(model.prompts), 1)
 
     def test_rejects_uncited_answer_after_removing_control_token_line(self) -> None:
         document = Document(
