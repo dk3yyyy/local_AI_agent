@@ -37,3 +37,29 @@ include-package-data = true
 
 [tool.setuptools.package-data]
 "local_ai_agent.data" = ["*.csv", "*.json"]
+
+[tool.coverage.run]
+source = ["."]
+
+[tool.coverage.report]
+include = [
+    "agent.py",
+    "dashboard_support.py",
+    "evaluation.py",
+    "main.py",
+    "ollama_health.py",
+    "vector.py",
+]
+show_missing = true
+
+[tool.mypy]
+files = [
+    "agent.py",
+    "dashboard_support.py",
+    "evaluation.py",
+    "main.py",
+    "ollama_health.py",
+    "vector.py",
+]
+check_untyped_defs = true
+ignore_missing_imports = true

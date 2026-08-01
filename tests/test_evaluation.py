@@ -57,8 +57,9 @@ class RAGEvaluationTest(unittest.TestCase):
     def test_loads_curated_evaluation_set(self) -> None:
         cases = load_evaluation_cases(DEFAULT_EVALUATION_PATH)
 
-        self.assertEqual(len(cases), 4)
-        self.assertTrue(any(case.should_abstain for case in cases))
+        self.assertEqual(len(cases), 30)
+        self.assertEqual(sum(case.should_abstain for case in cases), 5)
+        self.assertTrue(all(case.category for case in cases))
         self.assertTrue(any(case.reference_facts for case in cases))
 
     def test_scores_retrieval_citations_faithfulness_and_abstention(self) -> None:
@@ -185,6 +186,55 @@ class RAGEvaluationTest(unittest.TestCase):
         self.assertEqual(metrics.citation_correctness, 0.0)
         self.assertEqual(metrics.answer_faithfulness, 0.0)
         self.assertEqual(metrics.abstention_accuracy, 0.0)
+
+    def test_rejection_is_not_a_successful_answer_or_support_score(self) -> None:
+        answer_case = EvaluationCase(
+            case_id="answer",
+            question="Is the crust crisp?",
+            relevant_titles=("Best pizza",),
+            reference_facts=(
+                ReferenceFact(
+                    answer_terms=("crispy",),
+                    source_terms=("crispy",),
+                ),
+            ),
+        )
+        abstain_case = EvaluationCase(
+            case_id="abstain",
+            question="Is parking available?",
+            relevant_titles=(),
+            reference_facts=(),
+            should_abstain=True,
+        )
+        rejected = EvaluationObservation(
+            case_id="answer",
+            relevant_source_ids=frozenset({"review-a"}),
+            retrieved_source_ids=("review-a",),
+            cited_source_ids=(),
+            cited_text="",
+            answer="I could not produce an answer with valid citations.",
+            abstained=False,
+            outcome="citation_validation_rejection",
+        )
+        abstained = EvaluationObservation(
+            case_id="abstain",
+            relevant_source_ids=frozenset(),
+            retrieved_source_ids=("review-a",),
+            cited_source_ids=(),
+            cited_text="",
+            answer="I could not find matching evidence.",
+            abstained=True,
+            outcome="model_abstention",
+        )
+
+        metrics = score_evaluation((answer_case, abstain_case), (rejected, abstained))
+
+        self.assertEqual(metrics.expected_action_accuracy, 0.5)
+        self.assertEqual(metrics.answer_success_rate, 0.0)
+        self.assertEqual(metrics.abstention_recall, 1.0)
+        self.assertEqual(metrics.reference_term_support_proxy, 0.0)
+        with self.assertRaisesRegex(ValueError, "exactly once"):
+            score_evaluation((answer_case,), (rejected, rejected))
 
 
 if __name__ == "__main__":

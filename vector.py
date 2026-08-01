@@ -6,7 +6,7 @@ from datetime import date
 from hashlib import sha256
 from importlib.resources import files
 from pathlib import Path
-from typing import IO, Any, cast
+from typing import IO, Any, TypeAlias, cast
 
 import pandas as pd
 from langchain_chroma import Chroma
@@ -79,7 +79,7 @@ ROLE_TO_CANONICAL = {
     "country": "Country",
 }
 
-ReviewSource = str | Path | IO[str] | IO[bytes] | pd.DataFrame
+ReviewSource: TypeAlias = str | Path | IO[str] | IO[bytes] | pd.DataFrame
 
 
 class ReviewDataError(ValueError):
@@ -441,10 +441,10 @@ def _documents_and_ids(dataframe: pd.DataFrame) -> tuple[list[Document], list[st
             if base_key == "extra_":
                 continue
             safe_key = base_key
-            suffix = 2
+            collision_suffix = 2
             while safe_key in metadata:
-                safe_key = f"{base_key}_{suffix}"
-                suffix += 1
+                safe_key = f"{base_key}_{collision_suffix}"
+                collision_suffix += 1
             metadata[safe_key] = str(raw_value)
             content_lines.append(f"{source_column}: {raw_value}")
         content_lines.append(f"Review: {row['Review']}")

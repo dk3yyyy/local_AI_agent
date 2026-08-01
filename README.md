@@ -16,11 +16,15 @@ By default, runtime review data, embeddings, and prompts are processed by embedd
 - **Safe offline state:** analytics still load when Ollama is unavailable, while the app shows exact setup commands instead of crashing.
 - **Adaptive CSV upload:** automatically detect common headers, manually map unfamiliar names, and isolate every dataset in content-addressed Chroma storage.
 - **Reconciled indexing:** content-derived IDs survive reordering; additions, changed records, and deletions are synchronized safely.
-- **Measured RAG:** a four-case evaluation set reports retrieval recall, citation correctness, reference-grounded faithfulness, and abstention accuracy.
+- **Measured RAG:** a versioned 30-case evaluation across nine answerable domains plus abstention compares semantic retrieval with a deterministic BM25 keyword baseline, then measures citation validity, a transparent reference-term support proxy, expected-action accuracy, answer success, and abstention recall.
 - **Installable CLI:** the packaged `local-ai-agent` command exposes status, ask, chat, and evaluate workflows.
 - **Local execution by default:** Ollama handles embeddings and answer generation unless a remote host is explicitly configured.
 
 See the [architecture diagram and boundary notes](docs/architecture.md).
+
+## Live workflow demo
+
+[Watch the silent 48-second dashboard demo](docs/assets/local-ai-agent-v0.2-demo.mp4). It shows the real local question trigger, indexing state, generated answer, validated citations, and an expanded source record using the bundled dataset.
 
 ## Requirements
 
@@ -127,6 +131,21 @@ Run the measured RAG evaluation against the configured local models:
 uv run local-ai-agent evaluate
 ```
 
+Write a reproducible machine-readable report and a Markdown summary:
+
+```bash
+uv run local-ai-agent evaluate --report-dir evaluation/results/my-run
+```
+
+The versioned case manifest is tied to the dataset SHA-256 and uses immutable
+content-derived source IDs for gold relevance. The report records model tags
+and immutable Ollama digests, dataset and case-set hashes, retrieval limit,
+runtime versions, per-case RAG and BM25 rankings, and aggregate metrics.
+Retrieval quality is reported as recall@k, hit rate@k, and MRR@k for both
+semantic search and the BM25 baseline. Relevance judgments are known-positive,
+not exhaustive. The generated report is evidence for this fixed benchmark
+configuration, not a claim about general RAG performance.
+
 The original source-tree command remains available for development:
 
 ```bash
@@ -174,18 +193,32 @@ The suite covers:
 - adaptive rating, date, and categorical filtering;
 - Ollama health states;
 - evidence-alias-to-source citation validation and model abstention;
-- all four RAG evaluation metrics;
+- the 30-case evaluation set, BM25 baseline, retrieval metrics, and decomposed
+  answer, citation, support-proxy, and abstention metrics;
+- evaluation-report serialization and credential-safe provenance;
 - deterministic upload storage;
 - Streamlit rendering without Ollama.
 
-Run lint and formatting checks:
+Run the same quality gates used by CI:
 
 ```bash
+uv run --with coverage==7.13.4 coverage run -m unittest discover -s tests -v
+uv run --with coverage==7.13.4 coverage report
+uv run --with mypy==1.18.2 mypy
 uvx --from ruff==0.16.1 ruff check .
 uvx --from ruff==0.16.1 ruff format --check .
+uv export --frozen --no-dev --format requirements-txt \
+  --no-emit-project -o /tmp/runtime-requirements.txt
+uvx --from pip-audit==2.10.1 pip-audit \
+  -r /tmp/runtime-requirements.txt --progress-spinner off \
+  --ignore-vuln CVE-2026-45829
 ```
 
-GitHub Actions runs the tests on Python 3.11 and Python 3.14.
+GitHub Actions tests Python 3.11 and Python 3.14 and reports coverage for all
+six core Python modules, including `evaluation.py`. On Python 3.11 it also runs
+static typing, Ruff, formatting, the runtime-dependency audit, package build,
+and an installed-CLI smoke test. Coverage remains visible without an arbitrary
+pass threshold.
 
 ## Project layout
 
@@ -202,6 +235,8 @@ GitHub Actions runs the tests on Python 3.11 and Python 3.14.
 │   └── data/rag_cases.json          # Curated RAG evaluation set
 ├── docs/architecture.md             # Architecture and privacy boundaries
 ├── docs/architecture.svg            # Editable architecture diagram
+├── evaluation/results/               # Versioned JSON and Markdown benchmark reports
+├── SECURITY.md                       # Reporting policy and scoped risk acceptance
 ├── tests/                            # Unit, integration, evaluation, and dashboard tests
 ├── pyproject.toml
 └── uv.lock
@@ -209,7 +244,7 @@ GitHub Actions runs the tests on Python 3.11 and Python 3.14.
 
 ## Dependency audit
 
-ChromaDB is declared directly at the newest PyPI release verified during this update (`1.5.9`). `pip-audit` still reports `PYSEC-2026-311` / `CVE-2026-45829`, and the advisory currently lists no fixed release. It concerns an unauthenticated Chroma HTTP server endpoint that accepts `trust_remote_code`; this application uses embedded Chroma and does not start that server. The finding is documented rather than misrepresented as resolved.
+ChromaDB is declared directly at the newest PyPI release verified during this update (`1.5.9`). `pip-audit` still reports `PYSEC-2026-311` / `CVE-2026-45829`, and the advisory currently lists no fixed release. It concerns an unauthenticated Chroma HTTP server endpoint that accepts `trust_remote_code`; this application uses embedded Chroma and does not start that server. CI ignores only this finding and fails on every other known vulnerability. The scope and removal conditions are documented in [SECURITY.md](SECURITY.md).
 
 ## Current limitations
 
@@ -218,7 +253,7 @@ ChromaDB is declared directly at the newest PyPI release verified during this up
 - Rating, date, sentiment, restaurant, and country filters are applied after semantic ranking. This is suitable for small local datasets but not optimized for very large collections.
 - Automatic mapping is conservative. Unfamiliar or ambiguous headers require confirmation in the dashboard.
 - Sentiment labels are displayed and filtered as supplied. The application does not infer sentiment when the dataset lacks a sentiment column.
-- The faithfulness score is a transparent reference-term check against cited source text, not an LLM judge or proof that every possible claim is correct.
+- The reference-term support proxy checks expected terms against answers and cited source text; it is not an LLM judge or proof that every claim is correct.
 - Topic modeling, hybrid keyword retrieval, and reranking are not implemented.
 - The application does not provide authentication or multi-user isolation and should not be exposed directly as a shared public service.
 

@@ -1,0 +1,1283 @@
+{
+  "configuration": {
+    "chat_model": "llama3.2",
+    "embedding_model": "mxbai-embed-large",
+    "evidence_limit": 5,
+    "models": {
+      "llama3.2": {
+        "digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+        "modified_at": "2026-07-31 16:14:24.118841+00:00",
+        "resolved_name": "llama3.2:latest",
+        "size": 2019393189
+      },
+      "mxbai-embed-large": {
+        "digest": "468836162de7f81e041c43663fedbbba921dcea9b9fefea135685a39b2d83dd8",
+        "modified_at": "2026-07-31 16:14:28.495867+00:00",
+        "resolved_name": "mxbai-embed-large:latest",
+        "size": 669615493
+      }
+    },
+    "ollama_host": "http://127.0.0.1:11434",
+    "ollama_version": "0.32.5"
+  },
+  "evaluation_set": {
+    "abstention_case_count": 5,
+    "answerable_case_count": 25,
+    "case_count": 30,
+    "categories": {
+      "abstention": 5,
+      "beverages": 1,
+      "dietary": 2,
+      "ingredients": 2,
+      "menu": 6,
+      "operations": 4,
+      "quality-defect": 3,
+      "style": 5,
+      "texture": 1,
+      "value": 1
+    }
+  },
+  "generated_at": "2026-07-31T16:42:39.160738Z",
+  "observations": {
+    "bm25_baseline": [
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "crispy-crust",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [
+          "review_13f6c41bf74292e7087a1a7ccf100c6d",
+          "review_a23134f6b63ffdb4c6fab9baa2cce095",
+          "review_cf6397aa45938d26e42aca081d576a93"
+        ],
+        "retrieved_source_ids": [
+          "review_e82c59e5e8a0069ab75de732490c39d1",
+          "review_0cee7aec6b30d32a93b194f3047ef5b4",
+          "review_13f6c41bf74292e7087a1a7ccf100c6d",
+          "review_8b58fbd7743e24c7f9332a65fb828318",
+          "review_b9521c53f19812b44e478bb616d381e3"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "vegan-cheese",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [
+          "review_08222ec4bad55a761d23c3dddf0dae72",
+          "review_20c52415ea843838a45b29821f7ba112"
+        ],
+        "retrieved_source_ids": [
+          "review_08222ec4bad55a761d23c3dddf0dae72",
+          "review_20c52415ea843838a45b29821f7ba112",
+          "review_4803ec6912573da6b2b09ee8d11efca4",
+          "review_231bf1e7bc7a4983da6e8971d932733c",
+          "review_4ced72c09a43162a44694cc2fdb4171a"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "dessert-pizza",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [
+          "review_f624da623120634ef3ae535a9501688c"
+        ],
+        "retrieved_source_ids": [
+          "review_08222ec4bad55a761d23c3dddf0dae72",
+          "review_58f10e007784450cfe4c44e239a3bed7",
+          "review_9671a6061820222dd8af1a72592a0a76",
+          "review_f624da623120634ef3ae535a9501688c",
+          "review_182d10267c2e4a1654aae9786af494d5"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "gluten-free-crust",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [
+          "review_6464cf45ebbd480454abc07065075c3b"
+        ],
+        "retrieved_source_ids": [
+          "review_6464cf45ebbd480454abc07065075c3b",
+          "review_1135e8f866f2f79d951325072190f564",
+          "review_49f2ddf7f8434772a008801d3f7dfd95",
+          "review_4803ec6912573da6b2b09ee8d11efca4",
+          "review_2f293fad89162c9ceb164d9812bc3d83"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "margherita-components",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [
+          "review_13809cb33172b3c40040348b296245df",
+          "review_5117c8c073d626838c7798930f15b8e1"
+        ],
+        "retrieved_source_ids": [
+          "review_637d1fbaecd307a046cc5b8d9f87614c",
+          "review_35bbb51a785b5d72e21b309d41d0db80",
+          "review_49f2ddf7f8434772a008801d3f7dfd95",
+          "review_5117c8c073d626838c7798930f15b8e1",
+          "review_13809cb33172b3c40040348b296245df"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "hawaiian-pizza",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [
+          "review_211ffae3b56d5e65fc7edc3f92143b12"
+        ],
+        "retrieved_source_ids": [
+          "review_211ffae3b56d5e65fc7edc3f92143b12",
+          "review_e0cf78dbbb255982fbfb1288297e52ea",
+          "review_d9ca96b76c7ab69c0f900f804d4a62f2",
+          "review_a92b57aa28366732db18740deb7d39c7",
+          "review_efa9ed9172b37cc0f45b45301c7ed9c3"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "white-pizza",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [
+          "review_1615431adc386cbc8063f8a3e7983f10",
+          "review_a6014a29ee06cc625b8b71a2bf39759b"
+        ],
+        "retrieved_source_ids": [
+          "review_1615431adc386cbc8063f8a3e7983f10",
+          "review_a6014a29ee06cc625b8b71a2bf39759b",
+          "review_5666239ad9f3340465ef839c7b49fb11",
+          "review_08709a30ce1fa58227877b0f647f43a3",
+          "review_637d1fbaecd307a046cc5b8d9f87614c"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "vodka-sauce",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [
+          "review_bfeabf92afa1ff6c1644bee468624ca2"
+        ],
+        "retrieved_source_ids": [
+          "review_bfeabf92afa1ff6c1644bee468624ca2",
+          "review_12574e71aaf0b76482d6fc6a57d34502",
+          "review_a92b57aa28366732db18740deb7d39c7",
+          "review_4803ec6912573da6b2b09ee8d11efca4",
+          "review_442067c8d75bbb31443c4aa64f1a1a45"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "buffalo-chicken",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [
+          "review_2ab5eb185f34f7f6233d315242b13034"
+        ],
+        "retrieved_source_ids": [
+          "review_2ab5eb185f34f7f6233d315242b13034",
+          "review_49f2ddf7f8434772a008801d3f7dfd95",
+          "review_13809cb33172b3c40040348b296245df",
+          "review_30d736e417c06e347851e710514d1046",
+          "review_0689a695ad22db80c369549a9ae071b2"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "breakfast-pizza",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [
+          "review_413d502bdf96213e0bd1eb04378cd88e"
+        ],
+        "retrieved_source_ids": [
+          "review_413d502bdf96213e0bd1eb04378cd88e",
+          "review_a74544dcca71945035e4da08cbefb263",
+          "review_08709a30ce1fa58227877b0f647f43a3",
+          "review_46deb903486e7bdbf280ccf75a8053b0",
+          "review_5df87053cbf1f73cd631288f814a9208"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "roman-style",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [
+          "review_d9ca96b76c7ab69c0f900f804d4a62f2"
+        ],
+        "retrieved_source_ids": [
+          "review_d9ca96b76c7ab69c0f900f804d4a62f2",
+          "review_0e5472a8c24c61a7e4de614412461918",
+          "review_1615431adc386cbc8063f8a3e7983f10",
+          "review_dad04092fb528c74b9d80ce442930ee4",
+          "review_43cc47cc7c997e68800e2faa043b18fc"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "detroit-style",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [
+          "review_dad04092fb528c74b9d80ce442930ee4"
+        ],
+        "retrieved_source_ids": [
+          "review_dad04092fb528c74b9d80ce442930ee4",
+          "review_b9521c53f19812b44e478bb616d381e3",
+          "review_d9ca96b76c7ab69c0f900f804d4a62f2",
+          "review_efa9ed9172b37cc0f45b45301c7ed9c3",
+          "review_08222ec4bad55a761d23c3dddf0dae72"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "chicago-deep-dish",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [
+          "review_442067c8d75bbb31443c4aa64f1a1a45"
+        ],
+        "retrieved_source_ids": [
+          "review_442067c8d75bbb31443c4aa64f1a1a45",
+          "review_0689a695ad22db80c369549a9ae071b2",
+          "review_dad04092fb528c74b9d80ce442930ee4",
+          "review_d9ca96b76c7ab69c0f900f804d4a62f2",
+          "review_0e5472a8c24c61a7e4de614412461918"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "new-york-style",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [
+          "review_0689a695ad22db80c369549a9ae071b2",
+          "review_0e5472a8c24c61a7e4de614412461918"
+        ],
+        "retrieved_source_ids": [
+          "review_0689a695ad22db80c369549a9ae071b2",
+          "review_0e5472a8c24c61a7e4de614412461918",
+          "review_b9e259e601836dfac086841092fe5c3b",
+          "review_dad04092fb528c74b9d80ce442930ee4",
+          "review_d9ca96b76c7ab69c0f900f804d4a62f2"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "delivery-problems",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [
+          "review_46deb903486e7bdbf280ccf75a8053b0",
+          "review_50429ddac7fcf92eb87d761a7b7e4d11",
+          "review_c79555a5cf3345966342cfb9207d2405",
+          "review_fb4a5b16a84ab35efc47e281e01894ce"
+        ],
+        "retrieved_source_ids": [
+          "review_01089957f487f383fe7854b0f2a4f945",
+          "review_c79555a5cf3345966342cfb9207d2405",
+          "review_9671a6061820222dd8af1a72592a0a76",
+          "review_50429ddac7fcf92eb87d761a7b7e4d11",
+          "review_8b58fbd7743e24c7f9332a65fb828318"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "long-waits",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [
+          "review_4306c4305c5959dd3587f8e870437a4a",
+          "review_442067c8d75bbb31443c4aa64f1a1a45",
+          "review_dad04092fb528c74b9d80ce442930ee4"
+        ],
+        "retrieved_source_ids": [
+          "review_4306c4305c5959dd3587f8e870437a4a",
+          "review_dad04092fb528c74b9d80ce442930ee4",
+          "review_1a28353790d8c4bc342444fd14f8be78",
+          "review_fcf71fc37903247f060ccea2cf271710",
+          "review_f20617ff46e7cc6abbc2073fca2f43cd"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "large-groups",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [
+          "review_9d84ed9fd7582f0a9f352fcdcc03483e",
+          "review_d8101a592a128df0fb622215f018391c"
+        ],
+        "retrieved_source_ids": [
+          "review_a92b57aa28366732db18740deb7d39c7",
+          "review_d8101a592a128df0fb622215f018391c",
+          "review_41461655b861f0c1a884f500840e0fa0",
+          "review_9d84ed9fd7582f0a9f352fcdcc03483e",
+          "review_425a2cada3d6ceebbccbd0b303368183"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "children-and-families",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [
+          "review_42e9a66d38512d7ecd0a86e52f12b2d2",
+          "review_d57690690aac0645faada4223d374551",
+          "review_f20617ff46e7cc6abbc2073fca2f43cd"
+        ],
+        "retrieved_source_ids": [
+          "review_f624da623120634ef3ae535a9501688c",
+          "review_08222ec4bad55a761d23c3dddf0dae72",
+          "review_8fcebe00f6c14a995fcc2c90235da9fc",
+          "review_38424247e3760fb18b79d5ce3d40c4a2",
+          "review_a74544dcca71945035e4da08cbefb263"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "drink-pairings",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [
+          "review_2f293fad89162c9ceb164d9812bc3d83",
+          "review_3618241908457302b051385404a70ab0"
+        ],
+        "retrieved_source_ids": [
+          "review_3618241908457302b051385404a70ab0",
+          "review_13f6c41bf74292e7087a1a7ccf100c6d",
+          "review_0bcb5c336ae1650ea59a3fe5d4ebad60",
+          "review_4ced72c09a43162a44694cc2fdb4171a",
+          "review_9d84ed9fd7582f0a9f352fcdcc03483e"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "price-and-value",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [
+          "review_49f2ddf7f8434772a008801d3f7dfd95",
+          "review_80b54150ee2f71f582c9798263dd92fe",
+          "review_b9e259e601836dfac086841092fe5c3b",
+          "review_bb1e3ccbdbad8d3f35e41770cc6e6b61"
+        ],
+        "retrieved_source_ids": [
+          "review_b9e259e601836dfac086841092fe5c3b",
+          "review_49f2ddf7f8434772a008801d3f7dfd95",
+          "review_a92b57aa28366732db18740deb7d39c7",
+          "review_08709a30ce1fa58227877b0f647f43a3",
+          "review_0689a695ad22db80c369549a9ae071b2"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "undercooked-centers",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [
+          "review_1a28353790d8c4bc342444fd14f8be78",
+          "review_28360738a639784c3ea351484aef20d2",
+          "review_43cc47cc7c997e68800e2faa043b18fc",
+          "review_e8050c6a11acaab43c264cebcdc532a4"
+        ],
+        "retrieved_source_ids": [
+          "review_43cc47cc7c997e68800e2faa043b18fc",
+          "review_28360738a639784c3ea351484aef20d2",
+          "review_9671a6061820222dd8af1a72592a0a76",
+          "review_e8050c6a11acaab43c264cebcdc532a4",
+          "review_49f2ddf7f8434772a008801d3f7dfd95"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "excessive-grease",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [
+          "review_182d10267c2e4a1654aae9786af494d5",
+          "review_9671a6061820222dd8af1a72592a0a76",
+          "review_e58826d3c2728e96a0f7b4f055d4e6b1"
+        ],
+        "retrieved_source_ids": [
+          "review_9671a6061820222dd8af1a72592a0a76",
+          "review_cf6397aa45938d26e42aca081d576a93",
+          "review_43cc47cc7c997e68800e2faa043b18fc",
+          "review_e58826d3c2728e96a0f7b4f055d4e6b1",
+          "review_182d10267c2e4a1654aae9786af494d5"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "negative-sauce-quality",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [
+          "review_12574e71aaf0b76482d6fc6a57d34502",
+          "review_823c8cf17bd94ada444a824145796489",
+          "review_a92b57aa28366732db18740deb7d39c7",
+          "review_bb161bcd8bbe609cc1be19e232fef089"
+        ],
+        "retrieved_source_ids": [
+          "review_08222ec4bad55a761d23c3dddf0dae72",
+          "review_9ade82029a7fb5aa8e00ace4a188e0ae",
+          "review_42e9a66d38512d7ecd0a86e52f12b2d2",
+          "review_aa7e1ac88a6d0b562f97f4f00767e253",
+          "review_413d502bdf96213e0bd1eb04378cd88e"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "fresh-ingredients",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [
+          "review_924b8212f2c0052946059cb4c867d038",
+          "review_dc2ae1a58c8bbd89048c1c0b569af1af",
+          "review_e0cf78dbbb255982fbfb1288297e52ea"
+        ],
+        "retrieved_source_ids": [
+          "review_49f2ddf7f8434772a008801d3f7dfd95",
+          "review_a92b57aa28366732db18740deb7d39c7",
+          "review_bb1e3ccbdbad8d3f35e41770cc6e6b61",
+          "review_41461655b861f0c1a884f500840e0fa0",
+          "review_9671a6061820222dd8af1a72592a0a76"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "seasonal-specials",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [
+          "review_4a9fb2adb5ce77a1c6cbddd7bb4be043",
+          "review_5666239ad9f3340465ef839c7b49fb11"
+        ],
+        "retrieved_source_ids": [
+          "review_5666239ad9f3340465ef839c7b49fb11",
+          "review_4a9fb2adb5ce77a1c6cbddd7bb4be043",
+          "review_58f10e007784450cfe4c44e239a3bed7",
+          "review_dc2ae1a58c8bbd89048c1c0b569af1af",
+          "review_08709a30ce1fa58227877b0f647f43a3"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "parking-abstention",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [],
+        "retrieved_source_ids": [
+          "review_9a960b06110fc713601c0d788e7b47e2",
+          "review_9065fb1d99a02d0c960161b729015f39",
+          "review_efa9ed9172b37cc0f45b45301c7ed9c3",
+          "review_01089957f487f383fe7854b0f2a4f945",
+          "review_bb1e3ccbdbad8d3f35e41770cc6e6b61"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "wheelchair-abstention",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [],
+        "retrieved_source_ids": [
+          "review_0ab44afae543aa0a4193a55fd4158e2d",
+          "review_2f293fad89162c9ceb164d9812bc3d83",
+          "review_2ab5eb185f34f7f6233d315242b13034",
+          "review_3618241908457302b051385404a70ab0",
+          "review_5df87053cbf1f73cd631288f814a9208"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "reservations-abstention",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [],
+        "retrieved_source_ids": [
+          "review_30d736e417c06e347851e710514d1046",
+          "review_f239cd569a160545f30b51fc79098f0b",
+          "review_425a2cada3d6ceebbccbd0b303368183",
+          "review_50429ddac7fcf92eb87d761a7b7e4d11",
+          "review_01089957f487f383fe7854b0f2a4f945"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "wifi-abstention",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [],
+        "retrieved_source_ids": [
+          "review_9a960b06110fc713601c0d788e7b47e2",
+          "review_6464cf45ebbd480454abc07065075c3b",
+          "review_50429ddac7fcf92eb87d761a7b7e4d11",
+          "review_08222ec4bad55a761d23c3dddf0dae72",
+          "review_46deb903486e7bdbf280ccf75a8053b0"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "",
+        "case_id": "delivery-fee-abstention",
+        "cited_source_ids": [],
+        "latency_ms": null,
+        "outcome": "retrieval_only",
+        "relevant_source_ids": [],
+        "retrieved_source_ids": [
+          "review_50429ddac7fcf92eb87d761a7b7e4d11",
+          "review_46deb903486e7bdbf280ccf75a8053b0",
+          "review_260dae3b81d315fbd9ee924b7f63c49a",
+          "review_01089957f487f383fe7854b0f2a4f945",
+          "review_9065fb1d99a02d0c960161b729015f39"
+        ]
+      }
+    ],
+    "rag": [
+      {
+        "abstained": false,
+        "answer": "Insufficient Evidence.\n\nThe reviews do not provide clear descriptions of the pizza crust's texture, particularly in relation to being crispy while still having some chew. While some reviewers mention the crust's texture (e.g., [1], [2]), others describe it as tough or gritty (e.g., [3], [4]). There is no consistent description that matches the question.",
+        "case_id": "crispy-crust",
+        "cited_source_ids": [
+          "review_cf6397aa45938d26e42aca081d576a93",
+          "review_f239cd569a160545f30b51fc79098f0b",
+          "review_27843d67520f3d3e98ad5dfd65b75bf1",
+          "review_66ff650d6d920ffa6d1f7797f1e67d11"
+        ],
+        "latency_ms": 5595.177419018,
+        "outcome": "answered",
+        "relevant_source_ids": [
+          "review_13f6c41bf74292e7087a1a7ccf100c6d",
+          "review_a23134f6b63ffdb4c6fab9baa2cce095",
+          "review_cf6397aa45938d26e42aca081d576a93"
+        ],
+        "retrieved_source_ids": [
+          "review_cf6397aa45938d26e42aca081d576a93",
+          "review_f239cd569a160545f30b51fc79098f0b",
+          "review_27843d67520f3d3e98ad5dfd65b75bf1",
+          "review_66ff650d6d920ffa6d1f7797f1e67d11",
+          "review_8fe21bed523d1395f51ec2a0141d9f7f"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "Based on the provided reviews, reviewers report contrasting experiences about the vegan cheese. Some reviewers, such as [1] and [2], express disappointment with the product's taste, texture, and aftertaste, citing issues like a grainy texture, strong coconut flavor, and unpleasant chemical tastes.\n\nOn the other hand, reviewer [3] reports a positive experience with the vegan pizza, praising the meltability of their cashew cheese and the freshness of their vegetable toppings. Reviewer [4] also mentions that their non-vegan friends enjoy the product, suggesting that it may be well-received by some consumers.\n\nHowever, there is no clear consensus on the overall quality or characteristics of the vegan cheese across all reviews.",
+        "case_id": "vegan-cheese",
+        "cited_source_ids": [
+          "review_08222ec4bad55a761d23c3dddf0dae72",
+          "review_8c0489c3ad5568aac51608d88d7a8bc6",
+          "review_20c52415ea843838a45b29821f7ba112",
+          "review_231bf1e7bc7a4983da6e8971d932733c"
+        ],
+        "latency_ms": 10427.238863077946,
+        "outcome": "answered",
+        "relevant_source_ids": [
+          "review_08222ec4bad55a761d23c3dddf0dae72",
+          "review_20c52415ea843838a45b29821f7ba112"
+        ],
+        "retrieved_source_ids": [
+          "review_08222ec4bad55a761d23c3dddf0dae72",
+          "review_20c52415ea843838a45b29821f7ba112",
+          "review_231bf1e7bc7a4983da6e8971d932733c",
+          "review_bb161bcd8bbe609cc1be19e232fef089",
+          "review_8c0489c3ad5568aac51608d88d7a8bc6"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "Yes, the reviews mention dessert pizzas.\n\nThe recommended flavor of dessert pizza is not explicitly stated in any review. However, one review mentions that they have dessert pizzas that are \"surprisingly good\" and recommends trying the Nutella and banana combination (review [1]).",
+        "case_id": "dessert-pizza",
+        "cited_source_ids": [
+          "review_f624da623120634ef3ae535a9501688c"
+        ],
+        "latency_ms": 4179.776731994934,
+        "outcome": "answered",
+        "relevant_source_ids": [
+          "review_f624da623120634ef3ae535a9501688c"
+        ],
+        "retrieved_source_ids": [
+          "review_46cb53200f8521feb75e7642d41ab245",
+          "review_f624da623120634ef3ae535a9501688c",
+          "review_1d3902b9c73a6a4fd453e618e8b731dc",
+          "review_3618241908457302b051385404a70ab0",
+          "review_42e9a66d38512d7ecd0a86e52f12b2d2"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "I could not produce an answer with citations that match the retrieved reviews.",
+        "case_id": "gluten-free-crust",
+        "cited_source_ids": [],
+        "latency_ms": 3111.7266649380326,
+        "outcome": "citation_validation_rejection",
+        "relevant_source_ids": [
+          "review_6464cf45ebbd480454abc07065075c3b"
+        ],
+        "retrieved_source_ids": [
+          "review_6464cf45ebbd480454abc07065075c3b",
+          "review_13f6c41bf74292e7087a1a7ccf100c6d",
+          "review_e8050c6a11acaab43c264cebcdc532a4",
+          "review_cf6397aa45938d26e42aca081d576a93",
+          "review_8fe21bed523d1395f51ec2a0141d9f7f"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "The praised ingredients in Margherita pizzas are:\n\n* Tomato sauce (mentioned in reviews [1], [2])\n* Fresh mozzarella (mentioned in reviews [1], [3], [2])\n* Basil (mentioned in reviews [1], [3])\n\nThere is no clear evidence of other ingredients being praised, but the cooking qualities mentioned include:\n\n* Perfectly chewy-crisp crust (review [1])\n* Perfect char (review [3])\n* Cooking time perfectly (review [4])\n* Expertise and attention to detail (review [4])",
+        "case_id": "margherita-components",
+        "cited_source_ids": [
+          "review_13809cb33172b3c40040348b296245df",
+          "review_dc2ae1a58c8bbd89048c1c0b569af1af",
+          "review_5117c8c073d626838c7798930f15b8e1",
+          "review_35bbb51a785b5d72e21b309d41d0db80"
+        ],
+        "latency_ms": 8270.35483205691,
+        "outcome": "answered",
+        "relevant_source_ids": [
+          "review_13809cb33172b3c40040348b296245df",
+          "review_5117c8c073d626838c7798930f15b8e1"
+        ],
+        "retrieved_source_ids": [
+          "review_13809cb33172b3c40040348b296245df",
+          "review_5117c8c073d626838c7798930f15b8e1",
+          "review_35bbb51a785b5d72e21b309d41d0db80",
+          "review_dc2ae1a58c8bbd89048c1c0b569af1af",
+          "review_ca3130944bc8520c4936ece2e143cb12"
+        ]
+      },
+      {
+        "abstained": true,
+        "answer": "I could not find any reviews matching the current question and filters.",
+        "case_id": "hawaiian-pizza",
+        "cited_source_ids": [],
+        "latency_ms": 875.66630798392,
+        "outcome": "model_abstention",
+        "relevant_source_ids": [
+          "review_211ffae3b56d5e65fc7edc3f92143b12"
+        ],
+        "retrieved_source_ids": [
+          "review_211ffae3b56d5e65fc7edc3f92143b12",
+          "review_f624da623120634ef3ae535a9501688c",
+          "review_8ae0a84472fa7202da17945f5f037092",
+          "review_46cb53200f8521feb75e7642d41ab245",
+          "review_35bbb51a785b5d72e21b309d41d0db80"
+        ]
+      },
+      {
+        "abstained": true,
+        "answer": "I could not find any reviews matching the current question and filters.",
+        "case_id": "white-pizza",
+        "cited_source_ids": [],
+        "latency_ms": 887.166297994554,
+        "outcome": "model_abstention",
+        "relevant_source_ids": [
+          "review_1615431adc386cbc8063f8a3e7983f10",
+          "review_a6014a29ee06cc625b8b71a2bf39759b"
+        ],
+        "retrieved_source_ids": [
+          "review_1615431adc386cbc8063f8a3e7983f10",
+          "review_a6014a29ee06cc625b8b71a2bf39759b",
+          "review_ca3130944bc8520c4936ece2e143cb12",
+          "review_4a9fb2adb5ce77a1c6cbddd7bb4be043",
+          "review_e0cf78dbbb255982fbfb1288297e52ea"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "The description of the vodka-sauce pizza is that it has a creamy, slightly spicy sauce as its base. The optional topping suggested by one reviewer is prosciutto for an extra flavor dimension [1]. However, there is no mention of other toppings or specific descriptions of the sauce beyond being \"suspiciously sweet\" and lacking complexity [2], or having a \"nice texture\" but lacking personality in terms of herbs, garlic, or salt [3].",
+        "case_id": "vodka-sauce",
+        "cited_source_ids": [
+          "review_bfeabf92afa1ff6c1644bee468624ca2",
+          "review_a92b57aa28366732db18740deb7d39c7",
+          "review_823c8cf17bd94ada444a824145796489"
+        ],
+        "latency_ms": 6786.548349075019,
+        "outcome": "answered",
+        "relevant_source_ids": [
+          "review_bfeabf92afa1ff6c1644bee468624ca2"
+        ],
+        "retrieved_source_ids": [
+          "review_bfeabf92afa1ff6c1644bee468624ca2",
+          "review_a92b57aa28366732db18740deb7d39c7",
+          "review_823c8cf17bd94ada444a824145796489",
+          "review_4803ec6912573da6b2b09ee8d11efca4",
+          "review_3477ac06147ab1bfaa40bf4f96bbca82"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "Based on the provided reviews, it appears that the balance and ingredient quality of the buffalo chicken pizza are praised. \n\nReview [1] mentions that the buffalo chicken pizza balances spicy and creamy perfectly, with high-quality and juicy chicken. Review [2] praises the application of buffalo mozzarella, stating it maintains its creamy integrity after being applied to the pizza.\n\nThere is no direct mention of specific ingredients or their quality in reviews [3], [4], and [5]. However, review [3] does mention a \"perfect balance of flavors\" from the 'Mediterranean' pizza, which may imply that other pizzas also have well-balanced flavors.",
+        "case_id": "buffalo-chicken",
+        "cited_source_ids": [
+          "review_2ab5eb185f34f7f6233d315242b13034",
+          "review_30d736e417c06e347851e710514d1046",
+          "review_ca3130944bc8520c4936ece2e143cb12",
+          "review_8b58fbd7743e24c7f9332a65fb828318",
+          "review_0ab44afae543aa0a4193a55fd4158e2d"
+        ],
+        "latency_ms": 9527.296634041704,
+        "outcome": "answered",
+        "relevant_source_ids": [
+          "review_2ab5eb185f34f7f6233d315242b13034"
+        ],
+        "retrieved_source_ids": [
+          "review_2ab5eb185f34f7f6233d315242b13034",
+          "review_ca3130944bc8520c4936ece2e143cb12",
+          "review_30d736e417c06e347851e710514d1046",
+          "review_8b58fbd7743e24c7f9332a65fb828318",
+          "review_0ab44afae543aa0a4193a55fd4158e2d"
+        ]
+      },
+      {
+        "abstained": true,
+        "answer": "I could not find any reviews matching the current question and filters.",
+        "case_id": "breakfast-pizza",
+        "cited_source_ids": [],
+        "latency_ms": 900.0685749342665,
+        "outcome": "model_abstention",
+        "relevant_source_ids": [
+          "review_413d502bdf96213e0bd1eb04378cd88e"
+        ],
+        "retrieved_source_ids": [
+          "review_413d502bdf96213e0bd1eb04378cd88e",
+          "review_46cb53200f8521feb75e7642d41ab245",
+          "review_a6014a29ee06cc625b8b71a2bf39759b",
+          "review_4a9fb2adb5ce77a1c6cbddd7bb4be043",
+          "review_f624da623120634ef3ae535a9501688c"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "Based on the provided reviews, it appears that Roman-style pizza differs from a usual round pie in terms of its crust shape and texture.\n\nSome reviewers mention that the crust is rectangular or has a focaccia-like base (Review [1]), which is distinct from the traditional round pies. However, there is no consistent description of the crust's shape across all reviews.\n\nRegarding the crust's texture, some reviewers express disappointment with its toughness or lack of chewiness (Reviews [2] and [3]). One reviewer mentions that the crust was \"leathery\" and had to be torn apart (Review [2]), while another notes that it was still doughy and pale (Review [3]).\n\nIn contrast, Review [4] describes a crust with an excessive edge, making up almost half of each slice, which is not typical of Roman-style pizza. Review [5] mentions that the crust was burnt, but this is not a characteristic commonly associated with Roman-style pizza.\n\nOverall, while there are some differences in texture and shape, the reviews do not provide consistent evidence to support a clear distinction between Roman-style pizza and usual round pies.",
+        "case_id": "roman-style",
+        "cited_source_ids": [
+          "review_d9ca96b76c7ab69c0f900f804d4a62f2",
+          "review_27843d67520f3d3e98ad5dfd65b75bf1",
+          "review_e8050c6a11acaab43c264cebcdc532a4",
+          "review_432fa44d59e772d65107db19fcf2ed20",
+          "review_44f1b7b944f624aad2586e2dffa0ea12"
+        ],
+        "latency_ms": 16624.680222012103,
+        "outcome": "answered",
+        "relevant_source_ids": [
+          "review_d9ca96b76c7ab69c0f900f804d4a62f2"
+        ],
+        "retrieved_source_ids": [
+          "review_d9ca96b76c7ab69c0f900f804d4a62f2",
+          "review_432fa44d59e772d65107db19fcf2ed20",
+          "review_44f1b7b944f624aad2586e2dffa0ea12",
+          "review_27843d67520f3d3e98ad5dfd65b75bf1",
+          "review_e8050c6a11acaab43c264cebcdc532a4"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "Based on the provided reviews, it appears that the structural details praised in the Detroit-style pizza are:\n\n* Crispy cheese edges [1]\n* Fluffy interior [1]\n* Corner pieces [1]\n\nThere is no mention of a specific crust type or texture being praised. Review [2] mentions \"perfect crispness\" but does not specify what type of crust it refers to.\n\nInsufficient evidence exists for the structural details of the crust itself, such as its thickness, flakiness, or layering.",
+        "case_id": "detroit-style",
+        "cited_source_ids": [
+          "review_dad04092fb528c74b9d80ce442930ee4",
+          "review_f239cd569a160545f30b51fc79098f0b"
+        ],
+        "latency_ms": 7712.886944995262,
+        "outcome": "answered",
+        "relevant_source_ids": [
+          "review_dad04092fb528c74b9d80ce442930ee4"
+        ],
+        "retrieved_source_ids": [
+          "review_dad04092fb528c74b9d80ce442930ee4",
+          "review_442067c8d75bbb31443c4aa64f1a1a45",
+          "review_f239cd569a160545f30b51fc79098f0b",
+          "review_8b58fbd7743e24c7f9332a65fb828318",
+          "review_9b3c07f09c27b1ad9d58b3e4b4dbcc83"
+        ]
+      },
+      {
+        "abstained": true,
+        "answer": "I could not find any reviews matching the current question and filters.",
+        "case_id": "chicago-deep-dish",
+        "cited_source_ids": [],
+        "latency_ms": 884.7970690112561,
+        "outcome": "model_abstention",
+        "relevant_source_ids": [
+          "review_442067c8d75bbb31443c4aa64f1a1a45"
+        ],
+        "retrieved_source_ids": [
+          "review_442067c8d75bbb31443c4aa64f1a1a45",
+          "review_dad04092fb528c74b9d80ce442930ee4",
+          "review_0e5472a8c24c61a7e4de614412461918",
+          "review_8b58fbd7743e24c7f9332a65fb828318",
+          "review_a23134f6b63ffdb4c6fab9baa2cce095"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "Insufficient Evidence.\n\nThe reviews do not provide consistent or clear characterization of the New York-style slices. While some reviewers mention specific aspects such as the foldability [1] and taste [2], others criticize the presentation [3] and quality of the crust [4]. There is no unified view on what constitutes a \"New York-style slice\" across all reviews.",
+        "case_id": "new-york-style",
+        "cited_source_ids": [
+          "review_0689a695ad22db80c369549a9ae071b2",
+          "review_0e5472a8c24c61a7e4de614412461918",
+          "review_202af3d22a12a639d21c216037e81d49",
+          "review_e8050c6a11acaab43c264cebcdc532a4"
+        ],
+        "latency_ms": 5413.699205964804,
+        "outcome": "answered",
+        "relevant_source_ids": [
+          "review_0689a695ad22db80c369549a9ae071b2",
+          "review_0e5472a8c24c61a7e4de614412461918"
+        ],
+        "retrieved_source_ids": [
+          "review_0e5472a8c24c61a7e4de614412461918",
+          "review_0689a695ad22db80c369549a9ae071b2",
+          "review_202af3d22a12a639d21c216037e81d49",
+          "review_e8050c6a11acaab43c264cebcdc532a4",
+          "review_efa9ed9172b37cc0f45b45301c7ed9c3"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "I could not produce an answer with citations that match the retrieved reviews.",
+        "case_id": "delivery-problems",
+        "cited_source_ids": [],
+        "latency_ms": 739.1056179767475,
+        "outcome": "citation_validation_rejection",
+        "relevant_source_ids": [
+          "review_46deb903486e7bdbf280ccf75a8053b0",
+          "review_50429ddac7fcf92eb87d761a7b7e4d11",
+          "review_c79555a5cf3345966342cfb9207d2405",
+          "review_fb4a5b16a84ab35efc47e281e01894ce"
+        ],
+        "retrieved_source_ids": [
+          "review_c79555a5cf3345966342cfb9207d2405",
+          "review_50429ddac7fcf92eb87d761a7b7e4d11",
+          "review_fb4a5b16a84ab35efc47e281e01894ce",
+          "review_9671a6061820222dd8af1a72592a0a76",
+          "review_f3684b15c85f4e974d3bf5606c7129aa"
+        ]
+      },
+      {
+        "abstained": true,
+        "answer": "I could not find any reviews matching the current question and filters.",
+        "case_id": "long-waits",
+        "cited_source_ids": [],
+        "latency_ms": 900.727892993018,
+        "outcome": "model_abstention",
+        "relevant_source_ids": [
+          "review_4306c4305c5959dd3587f8e870437a4a",
+          "review_442067c8d75bbb31443c4aa64f1a1a45",
+          "review_dad04092fb528c74b9d80ce442930ee4"
+        ],
+        "retrieved_source_ids": [
+          "review_fb4a5b16a84ab35efc47e281e01894ce",
+          "review_4306c4305c5959dd3587f8e870437a4a",
+          "review_35bbb51a785b5d72e21b309d41d0db80",
+          "review_c79555a5cf3345966342cfb9207d2405",
+          "review_50429ddac7fcf92eb87d761a7b7e4d11"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "The evidence suggests that the restaurant can handle large groups or parties because reviews [1], [2], and [3] mention accommodating for big groups, party packages, and hosting kids' parties with various activities. Review [4] also mentions a \"party package\" but does not specifically state handling large groups.\n\nInsufficient Evidence",
+        "case_id": "large-groups",
+        "cited_source_ids": [
+          "review_9d84ed9fd7582f0a9f352fcdcc03483e",
+          "review_d8101a592a128df0fb622215f018391c",
+          "review_d57690690aac0645faada4223d374551",
+          "review_ad6e457de9e0de9ddca62dd81012d94a"
+        ],
+        "latency_ms": 5021.321017993614,
+        "outcome": "answered",
+        "relevant_source_ids": [
+          "review_9d84ed9fd7582f0a9f352fcdcc03483e",
+          "review_d8101a592a128df0fb622215f018391c"
+        ],
+        "retrieved_source_ids": [
+          "review_9d84ed9fd7582f0a9f352fcdcc03483e",
+          "review_d8101a592a128df0fb622215f018391c",
+          "review_f624da623120634ef3ae535a9501688c",
+          "review_d57690690aac0645faada4223d374551",
+          "review_ad6e457de9e0de9ddca62dd81012d94a"
+        ]
+      },
+      {
+        "abstained": true,
+        "answer": "I could not find any reviews matching the current question and filters.",
+        "case_id": "children-and-families",
+        "cited_source_ids": [],
+        "latency_ms": 880.2069170633331,
+        "outcome": "model_abstention",
+        "relevant_source_ids": [
+          "review_42e9a66d38512d7ecd0a86e52f12b2d2",
+          "review_d57690690aac0645faada4223d374551",
+          "review_f20617ff46e7cc6abbc2073fca2f43cd"
+        ],
+        "retrieved_source_ids": [
+          "review_f20617ff46e7cc6abbc2073fca2f43cd",
+          "review_d57690690aac0645faada4223d374551",
+          "review_f624da623120634ef3ae535a9501688c",
+          "review_42e9a66d38512d7ecd0a86e52f12b2d2",
+          "review_10c14c4f4777cd0e92889dd3f2c8e96b"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "I could not produce an answer with citations that match the retrieved reviews.",
+        "case_id": "drink-pairings",
+        "cited_source_ids": [],
+        "latency_ms": 722.0424159895629,
+        "outcome": "citation_validation_rejection",
+        "relevant_source_ids": [
+          "review_2f293fad89162c9ceb164d9812bc3d83",
+          "review_3618241908457302b051385404a70ab0"
+        ],
+        "retrieved_source_ids": [
+          "review_3618241908457302b051385404a70ab0",
+          "review_2f293fad89162c9ceb164d9812bc3d83",
+          "review_2787e993842fe9bd113a2d1d458e3295",
+          "review_9b9578da35871932c39da7a0fdc46c1b",
+          "review_58f10e007784450cfe4c44e239a3bed7"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "The specific price or portion complaints that make reviewers question the value are:\n\n* Review [1]: The reviewer feels that the 8-slice large pizza has slices so small that two bites are gone, making the portion size \"simply unacceptable\" for the price charged.\n* Review [2]: The reviewer expects a larger portion size for $15 and is disappointed when they receive a 'personal' pizza that's only the size of a CD.\n* Review [3]: The reviewer finds the prices too high, especially for basic large cheese pizzas ($30-$40), considering the quality doesn't justify these premium prices.\n\nThese complaints suggest that reviewers are questioning the value due to perceived overpricing and/or small portion sizes.",
+        "case_id": "price-and-value",
+        "cited_source_ids": [
+          "review_b9e259e601836dfac086841092fe5c3b",
+          "review_80b54150ee2f71f582c9798263dd92fe",
+          "review_bb1e3ccbdbad8d3f35e41770cc6e6b61"
+        ],
+        "latency_ms": 10290.357508929446,
+        "outcome": "answered",
+        "relevant_source_ids": [
+          "review_49f2ddf7f8434772a008801d3f7dfd95",
+          "review_80b54150ee2f71f582c9798263dd92fe",
+          "review_b9e259e601836dfac086841092fe5c3b",
+          "review_bb1e3ccbdbad8d3f35e41770cc6e6b61"
+        ],
+        "retrieved_source_ids": [
+          "review_b9e259e601836dfac086841092fe5c3b",
+          "review_49f2ddf7f8434772a008801d3f7dfd95",
+          "review_80b54150ee2f71f582c9798263dd92fe",
+          "review_bb1e3ccbdbad8d3f35e41770cc6e6b61",
+          "review_9001d44a210559a0a3a9033e63f2fed4"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "Based on the provided reviews, signs of an undercooked center reported include:\n\n* Unmelted cheese (review [1])\n* Cold center with undermelted cheese (review [2])\n* Doughy and undercooked middle (reviews [3] and [4])\n\nNote that review [5] mentions a strange metallic aftertaste, but it is not directly related to the center being undercooked.",
+        "case_id": "undercooked-centers",
+        "cited_source_ids": [
+          "review_1a28353790d8c4bc342444fd14f8be78",
+          "review_28360738a639784c3ea351484aef20d2",
+          "review_43cc47cc7c997e68800e2faa043b18fc",
+          "review_e8050c6a11acaab43c264cebcdc532a4",
+          "review_8c0489c3ad5568aac51608d88d7a8bc6"
+        ],
+        "latency_ms": 6167.138125980273,
+        "outcome": "answered",
+        "relevant_source_ids": [
+          "review_1a28353790d8c4bc342444fd14f8be78",
+          "review_28360738a639784c3ea351484aef20d2",
+          "review_43cc47cc7c997e68800e2faa043b18fc",
+          "review_e8050c6a11acaab43c264cebcdc532a4"
+        ],
+        "retrieved_source_ids": [
+          "review_1a28353790d8c4bc342444fd14f8be78",
+          "review_28360738a639784c3ea351484aef20d2",
+          "review_43cc47cc7c997e68800e2faa043b18fc",
+          "review_e8050c6a11acaab43c264cebcdc532a4",
+          "review_8c0489c3ad5568aac51608d88d7a8bc6"
+        ]
+      },
+      {
+        "abstained": true,
+        "answer": "I could not find any reviews matching the current question and filters.",
+        "case_id": "excessive-grease",
+        "cited_source_ids": [],
+        "latency_ms": 872.8065741015598,
+        "outcome": "model_abstention",
+        "relevant_source_ids": [
+          "review_182d10267c2e4a1654aae9786af494d5",
+          "review_9671a6061820222dd8af1a72592a0a76",
+          "review_e58826d3c2728e96a0f7b4f055d4e6b1"
+        ],
+        "retrieved_source_ids": [
+          "review_9671a6061820222dd8af1a72592a0a76",
+          "review_e58826d3c2728e96a0f7b4f055d4e6b1",
+          "review_182d10267c2e4a1654aae9786af494d5",
+          "review_9065fb1d99a02d0c960161b729015f39",
+          "review_e8050c6a11acaab43c264cebcdc532a4"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "Based on the provided reviews, the following sauce defects are described by dissatisfied reviewers:\n\n* Unpleasant chemical aftertaste (review [1])\n* Artificial flavor (review [1])\n* Suspiciously sweet and one-dimensional taste, reminiscent of ketchup (review [2])\n* Rancid notes from spoiled tomatoes (review [3])\n\nNote that the reviews do not specifically mention other sauce defects such as greasiness or sloppy presentation, which are mentioned in reviews [4] and [5], respectively.",
+        "case_id": "negative-sauce-quality",
+        "cited_source_ids": [
+          "review_bb161bcd8bbe609cc1be19e232fef089",
+          "review_a92b57aa28366732db18740deb7d39c7",
+          "review_12574e71aaf0b76482d6fc6a57d34502",
+          "review_9671a6061820222dd8af1a72592a0a76",
+          "review_202af3d22a12a639d21c216037e81d49"
+        ],
+        "latency_ms": 7478.698421968147,
+        "outcome": "answered",
+        "relevant_source_ids": [
+          "review_12574e71aaf0b76482d6fc6a57d34502",
+          "review_823c8cf17bd94ada444a824145796489",
+          "review_a92b57aa28366732db18740deb7d39c7",
+          "review_bb161bcd8bbe609cc1be19e232fef089"
+        ],
+        "retrieved_source_ids": [
+          "review_bb161bcd8bbe609cc1be19e232fef089",
+          "review_a92b57aa28366732db18740deb7d39c7",
+          "review_12574e71aaf0b76482d6fc6a57d34502",
+          "review_9671a6061820222dd8af1a72592a0a76",
+          "review_202af3d22a12a639d21c216037e81d49"
+        ]
+      },
+      {
+        "abstained": false,
+        "answer": "The evidence for fresh or premium ingredients in positive reviews comes from:\n\n* Review [1]: Fresh tomatoes are used instead of canned.\n* Review [2]: High-quality olive oil is added just before serving, which enhances flavors and adds a wonderful aromatic element.\n* Review [3]: No mention of specific ingredients being used, but the reviewer praises the \"perfect combination\" of toppings and distribution.\n* Review [4]: No mention of specific ingredients being used, but the reviewer praises the cooking time and attention to detail.\n* Review [5]: San Marzano tomatoes and in-house mozzarella production are mentioned as evidence of a commitment to quality ingredients.\n\nNote that while these reviews provide some evidence for fresh or premium ingredients, they do not provide direct evidence for all types of premium ingredients.",
+        "case_id": "fresh-ingredients",
+        "cited_source_ids": [
+          "review_e0cf78dbbb255982fbfb1288297e52ea",
+          "review_2787e993842fe9bd113a2d1d458e3295",
+          "review_9b9578da35871932c39da7a0fdc46c1b",
+          "review_35bbb51a785b5d72e21b309d41d0db80",
+          "review_dc2ae1a58c8bbd89048c1c0b569af1af"
+        ],
+        "latency_ms": 11251.433104975149,
+        "outcome": "answered",
+        "relevant_source_ids": [
+          "review_924b8212f2c0052946059cb4c867d038",
+          "review_dc2ae1a58c8bbd89048c1c0b569af1af",
+          "review_e0cf78dbbb255982fbfb1288297e52ea"
+        ],
+        "retrieved_source_ids": [
+          "review_e0cf78dbbb255982fbfb1288297e52ea",
+          "review_2787e993842fe9bd113a2d1d458e3295",
+          "review_9b9578da35871932c39da7a0fdc46c1b",
+          "review_35bbb51a785b5d72e21b309d41d0db80",
+          "review_dc2ae1a58c8bbd89048c1c0b569af1af"
+        ]
+      },
+      {
+        "abstained": true,
+        "answer": "I could not find any reviews matching the current question and filters.",
+        "case_id": "seasonal-specials",
+        "cited_source_ids": [],
+        "latency_ms": 884.2669880250469,
+        "outcome": "model_abstention",
+        "relevant_source_ids": [
+          "review_4a9fb2adb5ce77a1c6cbddd7bb4be043",
+          "review_5666239ad9f3340465ef839c7b49fb11"
+        ],
+        "retrieved_source_ids": [
+          "review_4a9fb2adb5ce77a1c6cbddd7bb4be043",
+          "review_5666239ad9f3340465ef839c7b49fb11",
+          "review_46cb53200f8521feb75e7642d41ab245",
+          "review_ca3130944bc8520c4936ece2e143cb12",
+          "review_e0cf78dbbb255982fbfb1288297e52ea"
+        ]
+      },
+      {
+        "abstained": true,
+        "answer": "I could not find any reviews matching the current question and filters.",
+        "case_id": "parking-abstention",
+        "cited_source_ids": [],
+        "latency_ms": 875.8160950383171,
+        "outcome": "model_abstention",
+        "relevant_source_ids": [],
+        "retrieved_source_ids": [
+          "review_ad6e457de9e0de9ddca62dd81012d94a",
+          "review_9a960b06110fc713601c0d788e7b47e2",
+          "review_9065fb1d99a02d0c960161b729015f39",
+          "review_01089957f487f383fe7854b0f2a4f945",
+          "review_4306c4305c5959dd3587f8e870437a4a"
+        ]
+      },
+      {
+        "abstained": true,
+        "answer": "I could not find any reviews matching the current question and filters.",
+        "case_id": "wheelchair-abstention",
+        "cited_source_ids": [],
+        "latency_ms": 870.9037119988352,
+        "outcome": "model_abstention",
+        "relevant_source_ids": [],
+        "retrieved_source_ids": [
+          "review_ad6e457de9e0de9ddca62dd81012d94a",
+          "review_f624da623120634ef3ae535a9501688c",
+          "review_10c14c4f4777cd0e92889dd3f2c8e96b",
+          "review_d57690690aac0645faada4223d374551",
+          "review_9065fb1d99a02d0c960161b729015f39"
+        ]
+      },
+      {
+        "abstained": true,
+        "answer": "I could not find any reviews matching the current question and filters.",
+        "case_id": "reservations-abstention",
+        "cited_source_ids": [],
+        "latency_ms": 868.6721380800009,
+        "outcome": "model_abstention",
+        "relevant_source_ids": [],
+        "retrieved_source_ids": [
+          "review_ad6e457de9e0de9ddca62dd81012d94a",
+          "review_f624da623120634ef3ae535a9501688c",
+          "review_9a960b06110fc713601c0d788e7b47e2",
+          "review_01089957f487f383fe7854b0f2a4f945",
+          "review_44993d1fac543a96025bdbf0aad40207"
+        ]
+      },
+      {
+        "abstained": true,
+        "answer": "I could not find any reviews matching the current question and filters.",
+        "case_id": "wifi-abstention",
+        "cited_source_ids": [],
+        "latency_ms": 877.0650050137192,
+        "outcome": "model_abstention",
+        "relevant_source_ids": [],
+        "retrieved_source_ids": [
+          "review_ad6e457de9e0de9ddca62dd81012d94a",
+          "review_9a960b06110fc713601c0d788e7b47e2",
+          "review_44993d1fac543a96025bdbf0aad40207",
+          "review_9065fb1d99a02d0c960161b729015f39",
+          "review_5df87053cbf1f73cd631288f814a9208"
+        ]
+      },
+      {
+        "abstained": true,
+        "answer": "I could not find any reviews matching the current question and filters.",
+        "case_id": "delivery-fee-abstention",
+        "cited_source_ids": [],
+        "latency_ms": 862.8429740201682,
+        "outcome": "model_abstention",
+        "relevant_source_ids": [],
+        "retrieved_source_ids": [
+          "review_49f2ddf7f8434772a008801d3f7dfd95",
+          "review_50429ddac7fcf92eb87d761a7b7e4d11",
+          "review_fb4a5b16a84ab35efc47e281e01894ce",
+          "review_b9e259e601836dfac086841092fe5c3b",
+          "review_4306c4305c5959dd3587f8e870437a4a"
+        ]
+      }
+    ]
+  },
+  "provenance": {
+    "application_version": "0.2.0",
+    "cases_file": "rag_cases.json",
+    "cases_sha256": "b46d008043ad5a815fc6f9563362901f2a4368a408739c811ae80a614556a141",
+    "dataset_file": "realistic_restaurant_reviews.csv",
+    "dataset_sha256": "8ace5c1cb728c3c8a355d90a414849ebd645e021aae8a5b32303ef310917254e",
+    "dependency_versions": {
+      "chromadb": "1.5.9",
+      "langchain-ollama": "1.1.0",
+      "pandas": "3.0.2"
+    },
+    "git_commit": "b9800bd2c1440c424b5407b25c7093488c83eb00",
+    "git_dirty": true,
+    "platform": "Linux-7.0.0-1010-azure-x86_64-with-glibc2.43",
+    "python_version": "3.11.15",
+    "review_count": 123
+  },
+  "results": {
+    "bm25_baseline": {
+      "evaluated_case_count": 25,
+      "hit_rate_at_k": 0.88,
+      "limit": 5,
+      "mrr_at_k": 0.7533333333333333,
+      "recall_at_k": 0.77
+    },
+    "rag": {
+      "abstention_case_count": 5,
+      "abstention_recall": 1.0,
+      "answer_success_rate": 0.56,
+      "answerable_case_count": 25,
+      "case_count": 30,
+      "citation_validity": 0.56,
+      "expected_action_accuracy": 0.6333333333333333,
+      "reference_term_support_proxy": 0.52,
+      "retrieval_recall": 0.9133333333333333
+    },
+    "semantic_retrieval": {
+      "evaluated_case_count": 25,
+      "hit_rate_at_k": 1.0,
+      "limit": 5,
+      "mrr_at_k": 0.96,
+      "recall_at_k": 0.9133333333333333
+    }
+  },
+  "schema_version": 2,
+  "timing": {
+    "rag_mean_latency_ms": 4358.683,
+    "rag_median_latency_ms": 2006.227,
+    "rag_total_latency_ms": 130760.489
+  }
+}
