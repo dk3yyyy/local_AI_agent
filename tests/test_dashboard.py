@@ -124,9 +124,9 @@ Nigeria,Atlas Pizza,Neutral,Fair meal,2026-01-03,The meal was acceptable.
 
         self.assertEqual(list(application.exception), [])
         rendered_markdown = "\n".join(item.value for item in application.markdown)
-        self.assertIn("I could not produce an answer with citations", rendered_markdown)
+        self.assertIn("Guests praise the crispy crust [1].", rendered_markdown)
         self.assertNotIn("INSUFFICIENT_EVIDENCE", rendered_markdown)
-        self.assertNotIn("#### Evidence", rendered_markdown)
+        self.assertIn("#### Evidence", rendered_markdown)
 
 
 if __name__ == "__main__":
