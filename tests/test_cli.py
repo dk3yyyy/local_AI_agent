@@ -25,6 +25,10 @@ class EvaluationCLIReportTest(unittest.TestCase):
         )
 
         self.assertEqual(arguments.report_dir, Path("docs/evaluation"))
+        self.assertFalse(arguments.include_raw_responses)
+
+        opted_in = build_parser().parse_args(["evaluate", "--include-raw-responses"])
+        self.assertTrue(opted_in.include_raw_responses)
 
     def test_safe_endpoint_removes_credentials_query_and_fragment(self) -> None:
         endpoint = _safe_endpoint(
@@ -49,6 +53,8 @@ class EvaluationCLIReportTest(unittest.TestCase):
             cited_text="crisp",
             answer="It is crisp [1].",
             abstained=False,
+            raw_model_response="private source-derived text",
+            repair_model_response="private repair text",
         )
         rag_metrics = EvaluationMetrics(1.0, 1.0, 1.0, 1.0, 1)
         retrieval_metrics = RetrievalMetrics(1.0, 1.0, 1.0, 1, 5)
@@ -100,18 +106,46 @@ class EvaluationCLIReportTest(unittest.TestCase):
                 patch("main.ollama_version", return_value="0.32.5"),
             ):
                 exit_code = run(arguments)
+                opted_in_dir = Path(directory) / "evaluation-with-raw"
+                opted_in_arguments = build_parser().parse_args(
+                    [
+                        "evaluate",
+                        "--chat-model",
+                        "chat",
+                        "--embedding-model",
+                        "embed",
+                        "--report-dir",
+                        str(opted_in_dir),
+                        "--include-raw-responses",
+                    ]
+                )
+                opted_in_exit_code = run(opted_in_arguments)
 
             payload = json.loads(
                 (report_dir / "evaluation-report.json").read_text(encoding="utf-8")
             )
             markdown = (report_dir / "README.md").read_text(encoding="utf-8")
+            opted_in_payload = json.loads(
+                (opted_in_dir / "evaluation-report.json").read_text(encoding="utf-8")
+            )
 
         self.assertEqual(exit_code, 0)
+        self.assertEqual(opted_in_exit_code, 0)
         self.assertEqual(
             payload["configuration"]["models"]["chat"]["digest"], "sha256:chat"
         )
         self.assertEqual(payload["configuration"]["ollama_version"], "0.32.5")
         self.assertEqual(payload["results"]["semantic_retrieval"]["mrr_at_k"], 1.0)
+        self.assertNotIn("raw_model_response", payload["observations"]["rag"][0])
+        self.assertNotIn("repair_model_response", payload["observations"]["rag"][0])
+        self.assertEqual(
+            opted_in_payload["observations"]["rag"][0]["raw_model_response"],
+            "private source-derived text",
+        )
+        self.assertEqual(
+            opted_in_payload["observations"]["rag"][0]["repair_model_response"],
+            "private repair text",
+        )
         self.assertIn("Retrieval comparison", markdown)
 
     def test_evaluate_reports_late_ollama_provenance_failures(self) -> None:

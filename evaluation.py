@@ -477,20 +477,24 @@ def run_rag_evaluation(
             limit=limit,
         )
         latency_ms = (perf_counter() - started) * 1000
-        if not result.retrieved_source_ids:
+        if result.failure_reason == "retrieved_source_missing_id":
+            outcome = "retrieved_source_missing_id"
+        elif not result.retrieved_source_ids:
             outcome = "empty_retrieval"
         elif result.abstained:
-            outcome = (
-                "model_abstention_after_repair"
-                if result.repair_attempted
-                else "model_abstention"
-            )
+            if not result.repair_attempted:
+                outcome = "model_abstention"
+            elif (
+                result.initial_failure_reason == "clean_abstention"
+                and result.failure_reason == "clean_abstention"
+            ):
+                outcome = "model_abstention_confirmed_after_repair"
+            elif result.initial_failure_reason == "clean_abstention":
+                outcome = "model_abstention_preserved_after_failed_repair"
+            else:
+                outcome = "model_abstention_after_repair"
         elif not result.sources:
-            outcome = (
-                "citation_validation_rejection_after_repair"
-                if result.repair_attempted
-                else "citation_validation_rejection"
-            )
+            outcome = "citation_validation_rejection"
         elif result.repair_attempted:
             outcome = "answered_after_repair"
         else:
@@ -641,6 +645,7 @@ def build_evaluation_report(
     provenance: Mapping[str, Any],
     baseline_observations: tuple[EvaluationObservation, ...] = (),
     generated_at: str | None = None,
+    include_raw_responses: bool = False,
 ) -> dict[str, Any]:
     timestamp = generated_at or datetime.now(UTC).isoformat().replace("+00:00", "Z")
     categories = Counter(case.category for case in cases)
@@ -689,9 +694,16 @@ def build_evaluation_report(
                 observation.repair_attempted for observation in observations
             ),
             "repair_success_count": outcome_counts["answered_after_repair"],
+            "raw_responses_included": include_raw_responses,
         },
         "observations": {
-            "rag": [_observation_as_dict(observation) for observation in observations],
+            "rag": [
+                _observation_as_dict(
+                    observation,
+                    include_raw_responses=include_raw_responses,
+                )
+                for observation in observations
+            ],
             "bm25_baseline": [
                 _observation_as_dict(observation)
                 for observation in baseline_observations
@@ -700,8 +712,12 @@ def build_evaluation_report(
     }
 
 
-def _observation_as_dict(observation: EvaluationObservation) -> dict[str, Any]:
-    return {
+def _observation_as_dict(
+    observation: EvaluationObservation,
+    *,
+    include_raw_responses: bool = False,
+) -> dict[str, Any]:
+    serialized = {
         "case_id": observation.case_id,
         "relevant_source_ids": sorted(observation.relevant_source_ids),
         "retrieved_source_ids": list(observation.retrieved_source_ids),
@@ -710,12 +726,14 @@ def _observation_as_dict(observation: EvaluationObservation) -> dict[str, Any]:
         "abstained": observation.abstained,
         "outcome": observation.outcome,
         "latency_ms": observation.latency_ms,
-        "raw_model_response": observation.raw_model_response,
-        "repair_model_response": observation.repair_model_response,
         "initial_failure_reason": observation.initial_failure_reason,
         "failure_reason": observation.failure_reason,
         "repair_attempted": observation.repair_attempted,
     }
+    if include_raw_responses:
+        serialized["raw_model_response"] = observation.raw_model_response
+        serialized["repair_model_response"] = observation.repair_model_response
+    return serialized
 
 
 def _metric(value: object) -> str:
@@ -733,7 +751,17 @@ def _report_markdown(report: Mapping[str, Any]) -> str:
     configuration = report["configuration"]
     provenance = report["provenance"]
     timing = report["timing"]
-    diagnostics = report["diagnostics"]
+    diagnostics = report.get(
+        "diagnostics",
+        {
+            "outcomes": {},
+            "initial_failure_reasons": {},
+            "final_failure_reasons": {},
+            "repair_attempt_count": 0,
+            "repair_success_count": 0,
+            "raw_responses_included": False,
+        },
+    )
     return "\n".join(
         (
             "# Evaluation report",

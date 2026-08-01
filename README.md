@@ -12,7 +12,7 @@ By default, runtime review data, embeddings, and prompts are processed by embedd
 ## Highlights
 
 - **Visual dashboard:** rating metrics, distribution chart, date and rating filters, and review browser.
-- **Validated citations:** short evidence citations map strictly to stable retrieved source IDs; invented or missing citations fail safely.
+- **Validated citations:** short evidence citations map strictly to stable retrieved source IDs; an invalid or premature-abstention response gets one bounded correction attempt, then invented or missing citations fail safely.
 - **Safe offline state:** analytics still load when Ollama is unavailable, while the app shows exact setup commands instead of crashing.
 - **Adaptive CSV upload:** automatically detect common headers, manually map unfamiliar names, and isolate every dataset in content-addressed Chroma storage.
 - **Reconciled indexing:** content-derived IDs survive reordering; additions, changed records, and deletions are synchronized safely.
@@ -140,30 +140,16 @@ uv run local-ai-agent evaluate --report-dir evaluation/results/my-run
 The versioned case manifest is tied to the dataset SHA-256 and uses immutable
 content-derived source IDs for gold relevance. The report records model tags
 and immutable Ollama digests, dataset and case-set hashes, retrieval limit,
-runtime versions, per-case RAG and BM25 rankings, and aggregate metrics. Each
-RAG observation also retains the first raw model response, any one-shot repair
-response, the initial and final structured validation reasons, and whether a
-repair was attempted. These diagnostics stay in the evaluation artifact; the
-CLI and dashboard continue to expose only validated answers or safe fallback
-messages.
-
-Compare answer models without changing the embedding model or case set:
-
-```bash
-uv run local-ai-agent evaluate \
-  --chat-model llama3.2 \
-  --report-dir /tmp/local-ai-agent-llama3.2
-
-uv run local-ai-agent evaluate \
-  --chat-model <installed-7b-or-8b-instruct-model> \
-  --report-dir /tmp/local-ai-agent-stronger-model
-```
-
-Keep the reports outside the repository so benchmark artifacts do not make the
-worktree dirty. Compare answer success, citation validity, abstention recall,
-latency, and the per-case failure reasons rather than optimizing one aggregate
-score.
-
+runtime versions, per-case RAG and BM25 rankings, and aggregate metrics. Report
+schema v3 additively extends v2 with answer diagnostics; consumers should branch
+on `schema_version` before reading those fields. Each RAG observation records the
+initial and final structured validation reasons and whether a repair was
+attempted. Raw initial and repair model responses are omitted by default; pass
+`--include-raw-responses` only when those diagnostics are needed. The CLI and
+dashboard continue to expose only validated answers or safe fallback messages.
+Raw model responses may echo source review text, so treat opted-in evaluation
+artifacts as potentially sensitive and review or redact them before sharing or
+committing.
 Retrieval quality is reported as recall@k, hit rate@k, and MRR@k for both
 semantic search and the BM25 baseline. Relevance judgments are known-positive,
 not exhaustive. The generated report is evidence for this fixed benchmark
